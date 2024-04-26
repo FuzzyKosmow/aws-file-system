@@ -1,0 +1,11 @@
+D:\Repo\aws-file-system\AwsFileSystem\AwsFileSystem\bin\Debug\AwsFileSystem.exe.config
+D:\Repo\aws-file-system\AwsFileSystem\AwsFileSystem\bin\Debug\AwsFileSystem.exe
+D:\Repo\aws-file-system\AwsFileSystem\AwsFileSystem\bin\Debug\AwsFileSystem.pdb
+D:\Repo\aws-file-system\AwsFileSystem\AwsFileSystem\obj\Debug\AwsFileSystem.csproj.AssemblyReference.cache
+D:\Repo\aws-file-system\AwsFileSystem\AwsFileSystem\obj\Debug\AwsFileSystem.csproj.SuggestedBindingRedirects.cache
+D:\Repo\aws-file-system\AwsFileSystem\AwsFileSystem\obj\Debug\AwsFileSystem.Properties.Resources.resources
+D:\Repo\aws-file-system\AwsFileSystem\AwsFileSystem\obj\Debug\AwsFileSystem.csproj.GenerateResource.cache
+D:\Repo\aws-file-system\AwsFileSystem\AwsFileSystem\obj\Debug\AwsFileSystem.csproj.CoreCompileInputs.cache
+D:\Repo\aws-file-system\AwsFileSystem\AwsFileSystem\obj\Debug\AwsFileSystem.exe
+D:\Repo\aws-file-system\AwsFileSystem\AwsFileSystem\obj\Debug\AwsFileSystem.pdb
+D:\Repo\aws-file-system\AwsFileSystem\AwsFileSystem\obj\Debug\AwsFileSystem.Home.resources
