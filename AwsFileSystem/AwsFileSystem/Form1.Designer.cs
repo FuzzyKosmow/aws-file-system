@@ -39,21 +39,25 @@
             this.label4 = new System.Windows.Forms.Label();
             this.server_connect_btn = new System.Windows.Forms.Button();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
-            this.groupBox2 = new System.Windows.Forms.GroupBox();
-            this.listView1 = new System.Windows.Forms.ListView();
-            this.label5 = new System.Windows.Forms.Label();
-            this.local_site_txtbox = new System.Windows.Forms.TextBox();
+            this.localBrowser = new System.Windows.Forms.WebBrowser();
             this.label6 = new System.Windows.Forms.Label();
+            this.local_site_txtbox = new System.Windows.Forms.TextBox();
+            this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.serverBrowser = new System.Windows.Forms.WebBrowser();
             this.label7 = new System.Windows.Forms.Label();
             this.server_site_txtbox = new System.Windows.Forms.TextBox();
-            this.webBrowser1 = new System.Windows.Forms.WebBrowser();
-            this.webBrowser2 = new System.Windows.Forms.WebBrowser();
+            this.listView1 = new System.Windows.Forms.ListView();
+            this.label5 = new System.Windows.Forms.Label();
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.editToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.newToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.openToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.editToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.server_next_btn = new System.Windows.Forms.Button();
+            this.local_back_btn = new System.Windows.Forms.Button();
+            this.server_back_btn = new System.Windows.Forms.Button();
+            this.button2 = new System.Windows.Forms.Button();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.menuStrip1.SuspendLayout();
@@ -144,7 +148,9 @@
             // 
             // groupBox1
             // 
-            this.groupBox1.Controls.Add(this.webBrowser1);
+            this.groupBox1.Controls.Add(this.local_back_btn);
+            this.groupBox1.Controls.Add(this.button2);
+            this.groupBox1.Controls.Add(this.localBrowser);
             this.groupBox1.Controls.Add(this.label6);
             this.groupBox1.Controls.Add(this.local_site_txtbox);
             this.groupBox1.Location = new System.Drawing.Point(0, 169);
@@ -155,9 +161,39 @@
             this.groupBox1.Text = "Local";
             this.groupBox1.Enter += new System.EventHandler(this.groupBox1_Enter);
             // 
+            // localBrowser
+            // 
+            this.localBrowser.Location = new System.Drawing.Point(9, 45);
+            this.localBrowser.MinimumSize = new System.Drawing.Size(20, 20);
+            this.localBrowser.Name = "localBrowser";
+            this.localBrowser.Size = new System.Drawing.Size(451, 250);
+            this.localBrowser.TabIndex = 2;
+            this.localBrowser.LocationChanged += new System.EventHandler(this.localBrowser_LocationChanged);
+            this.localBrowser.TabIndexChanged += new System.EventHandler(this.localBrowser_TabIndexChanged);
+            // 
+            // label6
+            // 
+            this.label6.AutoSize = true;
+            this.label6.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label6.Location = new System.Drawing.Point(6, 22);
+            this.label6.Name = "label6";
+            this.label6.Size = new System.Drawing.Size(30, 16);
+            this.label6.TabIndex = 1;
+            this.label6.Text = "Site";
+            this.label6.Click += new System.EventHandler(this.label6_Click);
+            // 
+            // local_site_txtbox
+            // 
+            this.local_site_txtbox.Location = new System.Drawing.Point(42, 19);
+            this.local_site_txtbox.Name = "local_site_txtbox";
+            this.local_site_txtbox.Size = new System.Drawing.Size(366, 20);
+            this.local_site_txtbox.TabIndex = 0;
+            // 
             // groupBox2
             // 
-            this.groupBox2.Controls.Add(this.webBrowser2);
+            this.groupBox2.Controls.Add(this.server_back_btn);
+            this.groupBox2.Controls.Add(this.server_next_btn);
+            this.groupBox2.Controls.Add(this.serverBrowser);
             this.groupBox2.Controls.Add(this.label7);
             this.groupBox2.Controls.Add(this.server_site_txtbox);
             this.groupBox2.Location = new System.Drawing.Point(472, 169);
@@ -166,6 +202,31 @@
             this.groupBox2.TabIndex = 4;
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Server";
+            // 
+            // serverBrowser
+            // 
+            this.serverBrowser.Location = new System.Drawing.Point(13, 45);
+            this.serverBrowser.MinimumSize = new System.Drawing.Size(20, 20);
+            this.serverBrowser.Name = "serverBrowser";
+            this.serverBrowser.Size = new System.Drawing.Size(451, 250);
+            this.serverBrowser.TabIndex = 2;
+            // 
+            // label7
+            // 
+            this.label7.AutoSize = true;
+            this.label7.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label7.Location = new System.Drawing.Point(6, 22);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(30, 16);
+            this.label7.TabIndex = 1;
+            this.label7.Text = "Site";
+            // 
+            // server_site_txtbox
+            // 
+            this.server_site_txtbox.Location = new System.Drawing.Point(42, 19);
+            this.server_site_txtbox.Name = "server_site_txtbox";
+            this.server_site_txtbox.Size = new System.Drawing.Size(370, 20);
+            this.server_site_txtbox.TabIndex = 0;
             // 
             // listView1
             // 
@@ -184,57 +245,6 @@
             this.label5.Size = new System.Drawing.Size(71, 13);
             this.label5.TabIndex = 6;
             this.label5.Text = "Server Status";
-            // 
-            // local_site_txtbox
-            // 
-            this.local_site_txtbox.Location = new System.Drawing.Point(42, 19);
-            this.local_site_txtbox.Name = "local_site_txtbox";
-            this.local_site_txtbox.Size = new System.Drawing.Size(418, 20);
-            this.local_site_txtbox.TabIndex = 0;
-            // 
-            // label6
-            // 
-            this.label6.AutoSize = true;
-            this.label6.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label6.Location = new System.Drawing.Point(6, 22);
-            this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(30, 16);
-            this.label6.TabIndex = 1;
-            this.label6.Text = "Site";
-            this.label6.Click += new System.EventHandler(this.label6_Click);
-            // 
-            // label7
-            // 
-            this.label7.AutoSize = true;
-            this.label7.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label7.Location = new System.Drawing.Point(6, 22);
-            this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(30, 16);
-            this.label7.TabIndex = 1;
-            this.label7.Text = "Site";
-            // 
-            // server_site_txtbox
-            // 
-            this.server_site_txtbox.Location = new System.Drawing.Point(42, 19);
-            this.server_site_txtbox.Name = "server_site_txtbox";
-            this.server_site_txtbox.Size = new System.Drawing.Size(422, 20);
-            this.server_site_txtbox.TabIndex = 0;
-            // 
-            // webBrowser1
-            // 
-            this.webBrowser1.Location = new System.Drawing.Point(9, 45);
-            this.webBrowser1.MinimumSize = new System.Drawing.Size(20, 20);
-            this.webBrowser1.Name = "webBrowser1";
-            this.webBrowser1.Size = new System.Drawing.Size(451, 250);
-            this.webBrowser1.TabIndex = 2;
-            // 
-            // webBrowser2
-            // 
-            this.webBrowser2.Location = new System.Drawing.Point(13, 45);
-            this.webBrowser2.MinimumSize = new System.Drawing.Size(20, 20);
-            this.webBrowser2.Name = "webBrowser2";
-            this.webBrowser2.Size = new System.Drawing.Size(451, 250);
-            this.webBrowser2.TabIndex = 2;
             // 
             // menuStrip1
             // 
@@ -257,6 +267,18 @@
             this.fileToolStripMenuItem.Size = new System.Drawing.Size(37, 20);
             this.fileToolStripMenuItem.Text = "File";
             // 
+            // newToolStripMenuItem
+            // 
+            this.newToolStripMenuItem.Name = "newToolStripMenuItem";
+            this.newToolStripMenuItem.Size = new System.Drawing.Size(103, 22);
+            this.newToolStripMenuItem.Text = "New";
+            // 
+            // openToolStripMenuItem
+            // 
+            this.openToolStripMenuItem.Name = "openToolStripMenuItem";
+            this.openToolStripMenuItem.Size = new System.Drawing.Size(103, 22);
+            this.openToolStripMenuItem.Text = "Open";
+            // 
             // editToolStripMenuItem
             // 
             this.editToolStripMenuItem.Name = "editToolStripMenuItem";
@@ -269,17 +291,47 @@
             this.helpToolStripMenuItem.Size = new System.Drawing.Size(44, 20);
             this.helpToolStripMenuItem.Text = "Help";
             // 
-            // newToolStripMenuItem
+            // server_next_btn
             // 
-            this.newToolStripMenuItem.Name = "newToolStripMenuItem";
-            this.newToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.newToolStripMenuItem.Text = "New";
+            this.server_next_btn.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.server_next_btn.Location = new System.Drawing.Point(444, 18);
+            this.server_next_btn.Name = "server_next_btn";
+            this.server_next_btn.Size = new System.Drawing.Size(20, 20);
+            this.server_next_btn.TabIndex = 3;
+            this.server_next_btn.Text = ">";
+            this.server_next_btn.UseVisualStyleBackColor = true;
             // 
-            // openToolStripMenuItem
+            // local_back_btn
             // 
-            this.openToolStripMenuItem.Name = "openToolStripMenuItem";
-            this.openToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.openToolStripMenuItem.Text = "Open";
+            this.local_back_btn.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.local_back_btn.Location = new System.Drawing.Point(414, 18);
+            this.local_back_btn.Name = "local_back_btn";
+            this.local_back_btn.Size = new System.Drawing.Size(20, 20);
+            this.local_back_btn.TabIndex = 3;
+            this.local_back_btn.Text = "<";
+            this.local_back_btn.UseVisualStyleBackColor = true;
+            this.local_back_btn.Click += new System.EventHandler(this.local_back_btn_Click);
+            // 
+            // server_back_btn
+            // 
+            this.server_back_btn.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.server_back_btn.Location = new System.Drawing.Point(418, 18);
+            this.server_back_btn.Name = "server_back_btn";
+            this.server_back_btn.Size = new System.Drawing.Size(20, 20);
+            this.server_back_btn.TabIndex = 3;
+            this.server_back_btn.Text = "<";
+            this.server_back_btn.UseVisualStyleBackColor = true;
+            // 
+            // button2
+            // 
+            this.button2.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.button2.Location = new System.Drawing.Point(440, 18);
+            this.button2.Name = "button2";
+            this.button2.Size = new System.Drawing.Size(20, 20);
+            this.button2.TabIndex = 3;
+            this.button2.Text = ">";
+            this.button2.UseVisualStyleBackColor = true;
+            this.button2.Click += new System.EventHandler(this.button2_Click);
             // 
             // Home
             // 
@@ -334,14 +386,18 @@
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.Label label7;
         private System.Windows.Forms.TextBox server_site_txtbox;
-        private System.Windows.Forms.WebBrowser webBrowser1;
-        private System.Windows.Forms.WebBrowser webBrowser2;
+        private System.Windows.Forms.WebBrowser localBrowser;
+        private System.Windows.Forms.WebBrowser serverBrowser;
         private System.Windows.Forms.MenuStrip menuStrip1;
         private System.Windows.Forms.ToolStripMenuItem fileToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem newToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem openToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem editToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem helpToolStripMenuItem;
+        private System.Windows.Forms.Button server_next_btn;
+        private System.Windows.Forms.Button local_back_btn;
+        private System.Windows.Forms.Button button2;
+        private System.Windows.Forms.Button server_back_btn;
     }
 }
 
