@@ -11,7 +11,7 @@ app.use((req, res, next) => {
   console.log("API : ", req.url);
   next();
 });
-//Todo: refactor into different router later
+//Todo: refactor into different controller later.
 // Configure multer for file uploads
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
@@ -224,6 +224,130 @@ app.post("/deleteFolder", (req, res) => {
     }
   });
 });
+app.post("/editFile", (req, res) => {
+  const {
+    accessKeyId,
+    secretAccessKey,
+    region,
+    bucketName,
+    oldFileName,
+    newFileName,
+  } = req.body;
 
+  // Update AWS global configuration
+  AWS.config.update({
+    accessKeyId,
+    secretAccessKey,
+    region,
+  });
+
+  const s3 = new AWS.S3();
+
+  // Copy the file to new name
+  const copyParams = {
+    Bucket: bucketName,
+    CopySource: `${bucketName}/${oldFileName}`,
+    Key: newFileName,
+  };
+
+  s3.copyObject(copyParams, (err, data) => {
+    if (err) {
+      console.error("Error : ", err);
+      res.status(500).send(err);
+    } else {
+      // Delete the old file
+      const deleteParams = {
+        Bucket: bucketName,
+        Key: oldFileName,
+      };
+
+      s3.deleteObject(deleteParams, (err, data) => {
+        if (err) {
+          console.error("Error : ", err);
+          res.status(500).send(err);
+        } else {
+          res.send(data);
+        }
+      });
+    }
+  });
+});
+
+app.post("/deleteFile", (req, res) => {
+  const { accessKeyId, secretAccessKey, region, bucketName, fileName } =
+    req.body;
+
+  // Update AWS global configuration
+  AWS.config.update({
+    accessKeyId,
+    secretAccessKey,
+    region,
+  });
+
+  const s3 = new AWS.S3();
+
+  const params = {
+    Bucket: bucketName,
+    Key: fileName,
+  };
+
+  s3.deleteObject(params, (err, data) => {
+    if (err) {
+      console.error("Error : ", err);
+      res.status(500).send(err);
+    } else {
+      res.send(data);
+    }
+  });
+});
+
+app.post("/moveFile", (req, res) => {
+  const {
+    accessKeyId,
+    secretAccessKey,
+    region,
+    bucketName,
+    oldFilePath,
+    newFilePath,
+  } = req.body;
+
+  // Update AWS global configuration
+  AWS.config.update({
+    accessKeyId,
+    secretAccessKey,
+    region,
+  });
+
+  const s3 = new AWS.S3();
+
+  // Copy the file to new path
+  const copyParams = {
+    Bucket: bucketName,
+    CopySource: `${bucketName}/${oldFilePath}`,
+    Key: newFilePath,
+  };
+
+  s3.copyObject(copyParams, (err, data) => {
+    if (err) {
+      console.error("Error : ", err);
+      res.status(500).send(err);
+    } else {
+      // Delete the old file
+      const deleteParams = {
+        Bucket: bucketName,
+        Key: oldFilePath,
+      };
+
+      s3.deleteObject(deleteParams, (err, data) => {
+        if (err) {
+          console.error("Error : ", err);
+          res.status(500).send(err);
+        } else {
+          res.send(data);
+        }
+      });
+    }
+  });
+});
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
