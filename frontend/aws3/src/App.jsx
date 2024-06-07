@@ -159,7 +159,11 @@ function App() {
       setIsUploading(true);
       const formData = new FormData();
       //Remove first /
-      const path = currentPath.slice(1);
+      let path = currentPath.slice(1);
+      //If last char is / , remove
+      if (path[path.length - 1] === "/") {
+        path = path.slice(0, -1);
+      }
       formData.append("file", file);
       formData.append("accessKeyId", accessKeyId);
       formData.append("secretAccessKey", secretAccessKey);
@@ -402,24 +406,35 @@ function App() {
           <h2>Current Path: {currentPath}</h2>
           <div className="object-tools">
             <div className="file-upload">
-              <label htmlFor="file">Choose a file </label>
+              <label style={{ textDecoration: "underline" }} htmlFor="file">
+                Choose a file{" "}
+              </label>
               <input
                 type="file"
                 id="file"
                 onChange={(e) => setFile(e.target.files[0])}
               />
 
-              {file && <label>:{file.name}</label>}
+              {file && (
+                <label>
+                  :
+                  {file.name.length > 20
+                    ? file.name.slice(0, 20) + "..."
+                    : file.name}
+                </label>
+              )}
             </div>
             <button
               onClick={uploadFile}
+              className="upload-button"
+              disabled={!file}
               style={
                 file
                   ? { backgroundColor: "green" }
                   : { backgroundColor: "grey" }
               }
             >
-              Upload file here
+              {isUploading ? "Uploading ..." : "Upload here"}
             </button>
             {currentPath.length > 0 && (
               <button
