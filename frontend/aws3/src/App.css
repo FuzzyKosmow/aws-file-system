@@ -32,6 +32,63 @@ button {
 .objects {
   margin-top: 20px;
 }
+.buckets-tools {
+  display: flex;
+  flex-direction: column;
+
+  .tools {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+    .create-bucket {
+      background-color: #28a745;
+      color: white;
+    }
+    .delete-bucket {
+      background-color: #dc3545;
+      color: white;
+    }
+    .list-objects {
+      background-color: #007bff;
+      color: white;
+    }
+  }
+  .error-container {
+    padding: 10px;
+  }
+}
+
+.object-tools {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+  .upload-object {
+    background-color: #007bff;
+    color: white;
+  }
+  .delete-object {
+    background-color: #dc3545;
+    color: white;
+  }
+
+  .file-upload {
+    border-radius: 5px;
+    display: flex;
+    gap: 10px;
+    padding: 10px;
+    font-size: 14px;
+    background-color: #2196f3;
+    color: white;
+    border: none;
+    cursor: pointer;
+    label {
+      cursor: pointer;
+    }
+    input {
+      display: none;
+    }
+  }
+}
 
 ul {
   list-style-type: none;

@@ -54,6 +54,41 @@ button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
+.error-container {
+  background-color: #dd2929;
+  padding: 0.125em 0.5em;
+  margin-bottom: 1em;
+  border-radius: 8px;
+  p {
+    font-size: 1em;
+    color: #ffffff;
+    margin: 0;
+    font-weight: bold;
+  }
+}
+
+.loading {
+  transition: spin 0.5s;
+  animation: spin 1s linear infinite;
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #3498db;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  margin: 0 auto;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
