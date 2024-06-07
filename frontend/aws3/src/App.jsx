@@ -5,8 +5,8 @@ import "./App.css";
 import regions from "./regions";
 
 //For dev:
-const accessKeyIdSample = "ABC";
-const secretAccess = "0z3ehf7+ABC";
+const accessKeyIdSample = "AB";
+const secretAccess = "0z3ehf7+AB";
 
 function App() {
   const [accessKeyId, setAccessKeyId] = useState(accessKeyIdSample);
@@ -31,7 +31,9 @@ function App() {
   const [bucketErrorMessage, setBucketErrorMessage] = useState("");
   const [isDeletingBucket, setIsDeletingBucket] = useState(false);
   const [isCreatingBucket, setIsCreatingBucket] = useState(false);
-
+  const [selectedFolder, setSelectedFolder] = useState("");
+  const [isCreatingFolder, setIsCreatingFolder] = useState(false);
+  const [isDeletingFolder, setIsDeletingFolder] = useState(false);
   // Auth
   const [authError, setAuthError] = useState(false);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
@@ -151,6 +153,7 @@ function App() {
     }
     //Clear selected objects when changing the current path
     setSelectedObjects([]);
+    setSelectedFolder("");
     //Refresh the list of objects when changing the current path
     const objects = getObjectsWithPath(tree, currentPath);
     setDisplayObjects(objects.flat());
@@ -205,41 +208,31 @@ function App() {
       console.error(error);
     }
   };
-  //Will receive a stream of data
-  const downloadFile = async () => {
-    try {
-      if (selectedObjects.length === 1) {
-        const object = selectedObjects[0];
-        const response = await axios.post(
-          "http://localhost:5000/downloadFile",
-          {
-            accessKeyId,
-            secretAccessKey,
-            region,
-            bucketName: selectedBucket,
-            fileName: object.Key,
-          }
-        );
-        //Receive res.download
-        if (response.data) {
-          console.log(response.data);
-          const url = window.URL.createObjectURL(new Blob([response.data]));
-          const link = document.createElement("a");
-          link.href = url;
-          link.setAttribute("download", object.Key);
-          document.body.appendChild(link);
-          link.click();
-        }
-      } else if (selectedObjects.length > 1) {
-        alert("Please select only one file to download");
-      } else {
-        alert("Please select a file to download");
-      }
-    } catch (error) {
-      console.error(error);
+  const deleteFolder = async () => {
+    //Popup confirm
+    setIsDeletingFolder(true);
+    if (
+      window.confirm(
+        `Are you sure you want to delete folder ${selectedFolder}?`
+      )
+    ) {
+      setIsDeletingFolder(true);
+      await axios
+        .post("http://localhost:5000/deleteFolder", {
+          accessKeyId,
+          secretAccessKey,
+          region,
+          bucketName: selectedBucket,
+          folderName: currentPath + selectedFolder,
+        })
+        .then(() => listObjectsFromBucket(selectedBucket))
+        .catch((error) => {
+          console.error(error);
+        });
     }
+    await listObjectsFromBucket(selectedBucket);
+    setIsDeletingFolder(false);
   };
-
   const toggleSelection = (object) => {
     setSelectedObjects((prevSelectedObjects) => {
       const isSelected = prevSelectedObjects.some(
@@ -252,6 +245,16 @@ function App() {
         );
       } else {
         return [...prevSelectedObjects, object];
+      }
+    });
+  };
+  const toggleSelectionFolder = (folderName) => {
+    //Only one folder can be selected at a time
+    setSelectedFolder((prevSelectedFolder) => {
+      if (prevSelectedFolder === folderName) {
+        return "";
+      } else {
+        return folderName;
       }
     });
   };
@@ -282,7 +285,13 @@ function App() {
         );
       } else {
         return (
-          <FolderItem key={key} folderName={key} openFolder={openFolder} />
+          <FolderItem
+            key={key}
+            folderName={key}
+            openFolder={openFolder}
+            toggleSelection={toggleSelectionFolder}
+            isSelected={selectedFolder === key}
+          />
         );
       }
     });
@@ -522,15 +531,39 @@ function App() {
               </button>
             </div>
             <div className="right">
-              {/* <button
-                onClick={downloadFile}
-                style={{
-                  backgroundColor:
-                    selectedObjects.length === 1 ? "green" : "grey",
-                }}
+              <button
+                onClick={deleteFolder}
+                disabled={selectedFolder === ""}
+                style={{ backgroundColor: selectedFolder ? "red" : "grey" }}
               >
-                Download a file
-              </button> */}
+                {isDeletingFolder ? "Deleting ..." : "Delete folder"}
+              </button>
+
+              <button
+                onClick={() => {
+                  setIsCreatingFolder(true);
+                  const folderName = prompt("Enter folder name");
+                  if (folderName) {
+                    axios
+
+                      .post("http://localhost:5000/createFolder", {
+                        accessKeyId,
+                        secretAccessKey,
+                        region,
+                        bucketName: selectedBucket,
+                        folderName: currentPath + folderName,
+                      })
+                      .then(() => listObjectsFromBucket(selectedBucket))
+                      .catch((error) => {
+                        console.error(error);
+                      });
+                  }
+                  setIsCreatingFolder(false);
+                }}
+                style={{ backgroundColor: "green" }}
+              >
+                {isCreatingFolder ? "Creating ..." : "Create folder"}
+              </button>
               <button
                 onClick={() => {
                   setSelectedObjects([]);
@@ -589,9 +622,18 @@ const ObjectItem = ({ object, toggleSelection, isSelected }) => {
 };
 
 //Folder : On double click , change folder path
-const FolderItem = ({ folderName, openFolder }) => {
+const FolderItem = ({
+  folderName,
+  openFolder,
+  toggleSelection,
+  isSelected,
+}) => {
   return (
-    <li onDoubleClick={() => openFolder(folderName)}>
+    <li
+      onDoubleClick={() => openFolder(folderName)}
+      onClick={() => toggleSelection(folderName)}
+      className={isSelected ? "selected" : ""}
+    >
       <div style={{ display: "flex", gap: "10px" }}>
         <img
           src="src/assets/folder.svg"
