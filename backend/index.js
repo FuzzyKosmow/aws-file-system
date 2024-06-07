@@ -189,12 +189,17 @@ app.post("/createFolder", (req, res) => {
     secretAccessKey,
     region,
   });
+  let folderPath = folderName;
+  //Trim the first /
+  if (folderPath.charAt(0) === "/") {
+    folderPath = folderPath.substring(1);
+  }
 
   const s3 = new AWS.S3();
 
   const params = {
     Bucket: bucketName,
-    Key: `${folderName}/`,
+    Key: `${folderPath}/`,
     Body: "",
   };
 
@@ -429,11 +434,15 @@ app.post("/deleteFolder", (req, res) => {
   });
 
   const s3 = new AWS.S3();
-
+  let foldPath = folderName;
+  //Trim the first /
+  if (foldPath.charAt(0) === "/") {
+    foldPath = foldPath.substring(1);
+  }
   // List all objects in the folder
   const listParams = {
     Bucket: bucketName,
-    Prefix: folderName,
+    Prefix: foldPath,
   };
 
   s3.listObjects(listParams, (err, data) => {
