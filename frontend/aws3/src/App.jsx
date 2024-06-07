@@ -6,7 +6,7 @@ import regions from "./regions";
 
 //For dev:
 const accessKeyIdSample = "ABC";
-const secretAccess = "ABC";
+const secretAccess = "0z3ehf7+ABC";
 
 function App() {
   const [accessKeyId, setAccessKeyId] = useState(accessKeyIdSample);
@@ -17,12 +17,13 @@ function App() {
   const [loadingBucketObjects, setLoadingBucketObjects] = useState(false);
   const [bucketObjects, setBucketObjects] = useState([]);
   const [displayObjects, setDisplayObjects] = useState([]);
-  //For upload
+  //For upload/ file management
   const [isUploading, setIsUploading] = useState(false);
   const [file, setFile] = useState(null);
   const [selectedObjects, setSelectedObjects] = useState([]);
   const [tree, setTree] = useState({});
   const [currentPath, setCurrentPath] = useState("/");
+  const [isDeletingFiles, setIsDeletingFiles] = useState(false);
   //Bucket interaction
   const [selectedBucket, setSelectedBucket] = useState("");
   const [loadedObjectMessage, setLoadedObjectMessage] = useState("");
@@ -30,6 +31,7 @@ function App() {
   const [bucketErrorMessage, setBucketErrorMessage] = useState("");
   const [isDeletingBucket, setIsDeletingBucket] = useState(false);
   const [isCreatingBucket, setIsCreatingBucket] = useState(false);
+
   // Auth
   const [authError, setAuthError] = useState(false);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
@@ -171,12 +173,71 @@ function App() {
       formData.append("bucketName", selectedBucket);
       formData.append("path", path);
       await axios.post("http://localhost:5000/uploadFile", formData);
-      listObjectsFromBucket(selectedBucket);
+      await listObjectsFromBucket(selectedBucket);
       setFile(null);
     } catch (error) {
       console.error(error);
     }
     setIsUploading(false);
+  };
+  const deleteFiles = async () => {
+    try {
+      setIsDeletingFiles(true);
+      if (
+        window.confirm(
+          `Are you sure you want to delete ${selectedObjects.length} objects?`
+        )
+      ) {
+        selectedObjects.forEach(async (object) => {
+          await axios.post("http://localhost:5000/deleteFile", {
+            accessKeyId,
+            secretAccessKey,
+            region,
+            bucketName: selectedBucket,
+            fileName: object.Key,
+          });
+        });
+      }
+      setIsDeletingFiles(false);
+      setSelectedObjects([]);
+      await listObjectsFromBucket(selectedBucket);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+  //Will receive a stream of data
+  const downloadFile = async () => {
+    try {
+      if (selectedObjects.length === 1) {
+        const object = selectedObjects[0];
+        const response = await axios.post(
+          "http://localhost:5000/downloadFile",
+          {
+            accessKeyId,
+            secretAccessKey,
+            region,
+            bucketName: selectedBucket,
+            fileName: object.Key,
+          }
+        );
+        //Receive res.download
+        if (response.data) {
+          console.log(response.data);
+          const url = window.URL.createObjectURL(new Blob([response.data]));
+          const link = document.createElement("a");
+          link.href = url;
+          link.setAttribute("download", object.Key);
+          document.body.appendChild(link);
+          link.click();
+        }
+      } else if (selectedObjects.length > 1) {
+        alert("Please select only one file to download");
+      } else {
+        alert("Please select a file to download");
+      }
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   const toggleSelection = (object) => {
@@ -229,7 +290,7 @@ function App() {
 
   return (
     <div className="app">
-      <h1>AWS S3 Manager</h1>
+      <h1>AWS S3 Explorer</h1>
       {authError && (
         <div className="error-container">
           <p>Access Key ID, Secret Access Key, and Region are required.</p>
@@ -405,50 +466,97 @@ function App() {
           <h2>{loadedObjectMessage}</h2>
           <h2>Current Path: {currentPath}</h2>
           <div className="object-tools">
-            <div className="file-upload">
-              <label style={{ textDecoration: "underline" }} htmlFor="file">
-                Choose a file{" "}
-              </label>
-              <input
-                type="file"
-                id="file"
-                onChange={(e) => setFile(e.target.files[0])}
-              />
-
-              {file && (
-                <label>
-                  :
-                  {file.name.length > 20
-                    ? file.name.slice(0, 20) + "..."
-                    : file.name}
-                </label>
+            <div className="left">
+              {currentPath.length > 0 && (
+                <button
+                  onClick={moveBackOneFolder}
+                  className="back-button"
+                  style={
+                    currentPath === "/"
+                      ? { backgroundColor: "#ccc" }
+                      : { backgroundColor: "#2196f3" }
+                  }
+                  disabled={currentPath === "/"}
+                >
+                  <img
+                    //Change color based on current path
+                    style={{
+                      width: "20px",
+                      color: currentPath === "/" ? "grey" : "white",
+                    }}
+                    src="src/assets/back.svg"
+                    alt="back"
+                  />
+                </button>
               )}
-            </div>
-            <button
-              onClick={uploadFile}
-              className="upload-button"
-              disabled={!file}
-              style={
-                file
-                  ? { backgroundColor: "green" }
-                  : { backgroundColor: "grey" }
-              }
-            >
-              {isUploading ? "Uploading ..." : "Upload here"}
-            </button>
-            {currentPath.length > 0 && (
+              <div className="file-upload">
+                <label style={{ textDecoration: "underline" }} htmlFor="file">
+                  Choose a file{" "}
+                </label>
+                <input
+                  type="file"
+                  id="file"
+                  onChange={(e) => setFile(e.target.files[0])}
+                />
+
+                {file && (
+                  <label>
+                    :
+                    {file.name.length > 20
+                      ? file.name.slice(0, 20) + "..."
+                      : file.name}
+                  </label>
+                )}
+              </div>
               <button
-                onClick={moveBackOneFolder}
+                onClick={uploadFile}
+                className="upload-button"
+                disabled={!file}
                 style={
-                  currentPath === "/"
-                    ? { backgroundColor: "#ccc" }
-                    : { backgroundColor: "#2196f3" }
+                  file
+                    ? { backgroundColor: "green" }
+                    : { backgroundColor: "grey" }
                 }
-                disabled={currentPath === "/"}
               >
-                Go back
+                {isUploading ? "Uploading ..." : "Upload here"}
               </button>
-            )}
+            </div>
+            <div className="right">
+              {/* <button
+                onClick={downloadFile}
+                style={{
+                  backgroundColor:
+                    selectedObjects.length === 1 ? "green" : "grey",
+                }}
+              >
+                Download a file
+              </button> */}
+              <button
+                onClick={() => {
+                  setSelectedObjects([]);
+                  setDisplayObjects([]);
+                }}
+                disabled={selectedObjects.length === 0}
+                style={
+                  selectedObjects.length > 0
+                    ? { backgroundColor: "orange" }
+                    : { backgroundColor: "grey" }
+                }
+              >
+                Clear selection
+              </button>
+              <button
+                disabled={selectedObjects.length === 0}
+                onClick={deleteFiles}
+                style={
+                  selectedObjects.length > 0
+                    ? { backgroundColor: "red" }
+                    : { backgroundColor: "grey" }
+                }
+              >
+                {isDeletingFiles ? "Deleting ..." : "Delete selected"}
+              </button>
+            </div>
           </div>
           <ul>{renderTree(tree)}</ul>
         </div>

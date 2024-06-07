@@ -61,40 +61,55 @@ button {
 .object-tools {
   display: flex;
   gap: 10px;
+  justify-content: space-between;
   margin-bottom: 10px;
-  .upload-object {
-    background-color: #007bff;
-    color: white;
-  }
-  .delete-object {
-    background-color: #dc3545;
-    color: white;
-  }
-
-  .file-upload {
-    border-radius: 5px;
+  .left {
     display: flex;
-    max-width: 300px;
-    max-height: 40px;
-    overflow: hidden;
     gap: 10px;
-    padding: 10px;
-    font-size: 14px;
-    background-color: #2196f3;
-    color: white;
-    border: none;
-    cursor: pointer;
-    label {
-      cursor: pointer;
+    .upload-object {
+      background-color: #007bff;
+      color: white;
     }
-    input {
-      display: none;
+    .delete-object {
+      background-color: #dc3545;
+      color: white;
+    }
+
+    .file-upload {
+      border-radius: 5px;
+      display: flex;
+      max-width: 300px;
+      max-height: 40px;
+      overflow: hidden;
+      gap: 10px;
+      padding: 10px;
+      font-size: 14px;
+      background-color: #2196f3;
+      color: white;
+      border: none;
+      cursor: pointer;
+      label {
+        cursor: pointer;
+      }
+      input {
+        display: none;
+      }
+    }
+
+    .upload-button {
+      min-width: 100px;
+      max-height: 40px;
+      padding: 10px;
+      justify-content: center;
     }
   }
-  .upload-button {
-    min-width: 100px;
-    max-height: 40px;
-    justify-content: center;
+  .right {
+    display: flex;
+    gap: 10px;
+    .download-object {
+      background-color: #007bff;
+      color: white;
+    }
   }
 }
 
