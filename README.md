@@ -1,2 +1,3 @@
 # aws-file-system
-A window application to manage file through AWS S3
+
+A web application to manage AWS S3 bucket files and folders. The application is built using React, Redux, Node.js, Express, and AWS SDK.
