@@ -1,9 +1,15 @@
+const { GetObjectCommand } = require("@aws-sdk/client-s3");
+//S3 client
+const { S3Client } = require("@aws-sdk/client-s3");
+
 const express = require("express");
 const AWS = require("aws-sdk");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const multer = require("multer");
 const validateCredentials = require("./utils/validateCaller");
+const path = require("path");
+const fs = require("fs");
 const app = express();
 app.use(bodyParser.json());
 app.use(cors());
@@ -155,6 +161,8 @@ app.post("/uploadFile", upload.single("file"), (req, res) => {
     path === "/" || path === ""
       ? file.originalname
       : `${path}/${file.originalname}`;
+  console.log("path", path);
+  console.log("keyPath", keyPath);
   const params = {
     Bucket: bucketName,
     Key: `${keyPath}`,
@@ -274,6 +282,27 @@ app.post("/deleteFile", (req, res) => {
     } else {
       res.send(data);
     }
+  });
+});
+
+app.post("/deleteFiles", (req, res) => {
+  const { accessKeyId, secretAccessKey, region, bucketName, files } = req.body;
+
+  // Update AWS global configuration
+  AWS.config.update({
+    accessKeyId,
+    secretAccessKey,
+    region,
+  });
+
+  const s3 = new AWS.S3();
+
+  const deletePromises = files.map((file) => {
+    const params = {
+      Bucket: bucketName,
+      Key: file,
+    };
+    return s3.deleteObject(params).promise();
   });
 });
 
