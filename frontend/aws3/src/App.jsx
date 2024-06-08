@@ -206,9 +206,10 @@ function App() {
       setTree(tree);
       setSelectedBucket(bucketName);
       setLoadedObjectMessage("Objects loaded for bucket: " + bucketName);
-      setCurrentPath("/");
     } catch (error) {
       console.error(error);
+    } finally {
+      setCurrentPath("/");
     }
     setLoadingBucketObjects(false);
   };
@@ -273,8 +274,8 @@ function App() {
     setIsUploading(false);
   };
   const deleteFiles = async () => {
+    setIsDeletingFiles(true);
     try {
-      setIsDeletingFiles(true);
       if (
         window.confirm(
           `Are you sure you want to delete ${selectedObjects.length} objects?`
@@ -290,19 +291,20 @@ function App() {
           });
         });
       }
-      setIsDeletingFiles(false);
+
       setSelectedObjects([]);
-      await listObjectsFromBucket(selectedBucket);
     } catch (error) {
       console.error(error);
+    } finally {
+      await listObjectsFromBucket(selectedBucket);
+      setIsDeletingFiles(false);
     }
   };
   const createFolder = async () => {
     setIsCreatingFolder(true);
     const folderName = prompt("Enter folder name");
     if (folderName) {
-      axios
-
+      await axios
         .post("http://localhost:5000/createFolder", {
           accessKeyId,
           secretAccessKey,
@@ -313,9 +315,9 @@ function App() {
         .then(() => listObjectsFromBucket(selectedBucket))
         .catch((error) => {
           console.error(error);
-          setIsCreatingFolder(false);
         });
     }
+    setIsCreatingFolder(false);
   };
   const deleteFolder = async () => {
     //Popup confirm
