@@ -39,7 +39,15 @@ app.post("/listBuckets", (req, res) => {
   s3.listBuckets((err, data) => {
     if (err) {
       console.error("Error : ", err);
-      res.status(500).send(err);
+      if (err.code === "InvalidAccessKeyId") {
+        res.status(401).send(err);
+      }
+      if (err.code === "SignatureDoesNotMatch") {
+        res.status(401).send(err);
+      }
+      if (err.code === "AccessDenied") {
+        res.status(401).send(err);
+      }
     } else {
       res.send(data.Buckets);
     }
