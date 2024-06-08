@@ -25,7 +25,7 @@ function App() {
   const [currentPath, setCurrentPath] = useState("/");
   const [isDeletingFiles, setIsDeletingFiles] = useState(false);
   const [isDownloadingFile, setIsDownloadingFile] = useState(false);
-
+  const [downloadProgress, setDownloadProgress] = useState(0);
   //Bucket interaction
   const [selectedBucket, setSelectedBucket] = useState("");
   const [loadedObjectMessage, setLoadedObjectMessage] = useState("");
@@ -134,11 +134,25 @@ function App() {
   const downloadFile = async () => {
     try {
       setIsDownloadingFile(true);
-      //Take the first object of the selected objects.
-      //If multiple, return .
+      setDownloadProgress(0); // Initialize download progress
+
+      // Take the first object of the selected objects.
+      // If multiple, return.
       if (selectedObjects.length > 1) {
         return;
       }
+      const resDataSize = await axios.post(
+        "http://localhost:5000/downloadFileSize",
+        {
+          accessKeyId,
+          secretAccessKey,
+          region,
+          bucketName: selectedBucket,
+          fileName: selectedObjects[0].Key,
+        }
+      );
+      // In bytes
+      const totalSize = resDataSize.data;
 
       const response = await axios.post(
         "http://localhost:5000/downloadFile",
@@ -151,6 +165,12 @@ function App() {
         },
         {
           responseType: "blob",
+          onDownloadProgress: (progressEvent) => {
+            const progress = Math.round(
+              (progressEvent.loaded * 100) / totalSize
+            );
+            setDownloadProgress(progress);
+          },
         }
       );
 
@@ -214,14 +234,7 @@ function App() {
       }
     });
   };
-  //Make folder go first, then files
-  const sortObjects = (objects) => {
-    //Receive pure objects and array of objects
 
-    const folders = objects.filter((object) => object.Key.endsWith("/"));
-    const files = objects.filter((object) => !object.Key.endsWith("/"));
-    return [...folders, ...files];
-  };
   useEffect(() => {
     if (!authed) {
       return;
@@ -753,6 +766,20 @@ function App() {
                 </button>
               </div>
             </div>
+            {
+              <div>
+                {isDownloadingFile && (
+                  <div className="download-progress">
+                    <progress
+                      className="progress-bar"
+                      value={downloadProgress}
+                      max="100"
+                    />
+                    <span className="progress-text">{downloadProgress}%</span>
+                  </div>
+                )}
+              </div>
+            }
             <ul>{renderTree(tree)}</ul>
           </div>
         )}
