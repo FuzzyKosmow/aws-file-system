@@ -1,7 +1,4 @@
-const { GetObjectCommand } = require("@aws-sdk/client-s3");
-//S3 client
-const { S3Client } = require("@aws-sdk/client-s3");
-
+const { S3Client, GetObjectCommand } = require("@aws-sdk/client-s3");
 const express = require("express");
 const AWS = require("aws-sdk");
 const bodyParser = require("body-parser");
@@ -52,6 +49,28 @@ app.post("/listBuckets", (req, res) => {
       res.send(data.Buckets);
     }
   });
+});
+app.post("/downloadFile", (req, res) => {
+  const { accessKeyId, secretAccessKey, region, bucketName, fileName } =
+    req.body;
+
+  // Update AWS global configuration
+  AWS.config.update({
+    accessKeyId,
+    secretAccessKey,
+    region,
+  });
+
+  const s3 = new AWS.S3();
+
+  const params = {
+    Bucket: bucketName,
+    Key: fileName,
+  };
+
+  res.attachment(fileName);
+  var fileStream = s3.getObject(params).createReadStream();
+  fileStream.pipe(res);
 });
 //create bucket
 app.post("/createBucket", (req, res) => {
