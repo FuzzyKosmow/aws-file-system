@@ -72,6 +72,34 @@ app.post("/downloadFile", (req, res) => {
   var fileStream = s3.getObject(params).createReadStream();
   fileStream.pipe(res);
 });
+//HEAD request to get tptal size of file
+app.post("/downloadFileSize", (req, res) => {
+  const { accessKeyId, secretAccessKey, region, bucketName, fileName } =
+    req.body;
+
+  // Update AWS global configuration
+  AWS.config.update({
+    accessKeyId,
+    secretAccessKey,
+    region,
+  });
+
+  const s3 = new AWS.S3();
+
+  const params = {
+    Bucket: bucketName,
+    Key: fileName,
+  };
+
+  s3.headObject(params, (err, data) => {
+    if (err) {
+      console.error("Error : ", err);
+      res.status(500).send(err);
+    } else {
+      res.send(data.ContentLength.toString());
+    }
+  });
+});
 //create bucket
 app.post("/createBucket", (req, res) => {
   const { accessKeyId, secretAccessKey, region, bucketName } = req.body;
