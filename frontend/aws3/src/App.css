@@ -1,6 +1,32 @@
+#root {
+  display: flex;
+  width: 100%;
+  height: 100vh;
+}
+
+body {
+  font-size: 16px;
+}
 .app {
   font-family: Arial, sans-serif;
+  display: flex;
+  flex-direction: row;
   padding: 20px;
+  width: 100%;
+  background-color: #f8f9fa;
+}
+
+.left-side,
+.right-side {
+  flex: 1;
+  width: 50%;
+}
+.divider {
+  width: 10px;
+  background-color: #f8f9fa;
+
+  border-left: 1px solid #ccc;
+  margin-left: 10px;
 }
 
 h1 {
@@ -9,14 +35,71 @@ h1 {
 
 .form {
   display: flex;
-  gap: 10px;
-  margin-bottom: 20px;
-}
+  flex-direction: column;
 
-.form input,
-.form select {
-  padding: 10px;
-  font-size: 14px;
+  .form-header {
+    p {
+      font-size: 20px;
+      margin-bottom: 10px;
+    }
+  }
+  .form-body {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    .form-inputs {
+      width: 300px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      label {
+        font-size: 14px;
+        margin-bottom: 5px;
+      }
+      input {
+        padding: 10px;
+        font-size: 14px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+      }
+      select {
+        padding: 10px;
+        font-size: 14px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+      }
+    }
+    .form-actions {
+      display: flex;
+      flex-direction: row;
+      gap: 10px;
+
+      .disconnect-button {
+        padding: 10px 15px;
+        font-size: 14px;
+        background-color: #dc3545;
+        color: white;
+        cursor: pointer;
+      }
+      .auth-button.valid {
+        padding: 10px 15px;
+        font-size: 14px;
+        background-color: #007bff;
+        color: white;
+        cursor: pointer;
+        &:hover {
+          background-color: #0056b3;
+        }
+      }
+      .auth-button.invalid {
+        padding: 10px 15px;
+        font-size: 14px;
+        background-color: grey;
+        color: white;
+        cursor: not-allowed;
+      }
+    }
+  }
 }
 
 button {
@@ -24,7 +107,7 @@ button {
   font-size: 14px;
   background-color: #007bff;
   color: white;
-  border: none;
+
   cursor: pointer;
 }
 
@@ -32,29 +115,71 @@ button {
 .objects {
   margin-top: 20px;
 }
-.buckets-tools {
+.buckets-container {
   display: flex;
   flex-direction: column;
+  .buckets-tools {
+    .tools {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+      .create-bucket {
+        padding: 10px 15px;
+        font-size: 14px;
+        background-color: #007bff;
+        color: white;
 
-  .tools {
+        &:hover {
+          background-color: #0056b3;
+        }
+      }
+      .delete-bucket {
+        padding: 10px 15px;
+        font-size: 14px;
+        color: white;
+      }
+      .delete-bucket.selected {
+        background-color: #dc3545;
+        &:hover {
+          background-color: #461a1e;
+        }
+      }
+      .delete-bucket.disabled {
+        background-color: grey;
+        cursor: not-allowed;
+      }
+      .list-objects {
+        padding: 10px 15px;
+        font-size: 14px;
+      }
+      .list-objects.disabled {
+        background-color: grey;
+        cursor: not-allowed;
+      }
+      .list-objects.selected {
+        background-color: #007bff;
+        &:hover {
+          background-color: #0056b3;
+        }
+      }
+    }
+  }
+  .buckets {
     display: flex;
+    flex-direction: column;
     gap: 10px;
-    margin-bottom: 10px;
-    .create-bucket {
-      background-color: #28a745;
-      color: white;
+    .bucket {
+      padding: 10px;
+      border: 1px solid #ccc;
+      cursor: pointer;
     }
-    .delete-bucket {
-      background-color: #dc3545;
-      color: white;
+    .bucket:hover {
+      background-color: #f0f0f0;
     }
-    .list-objects {
+    .bucket.selected {
       background-color: #007bff;
       color: white;
     }
-  }
-  .error-container {
-    padding: 10px;
   }
 }
 

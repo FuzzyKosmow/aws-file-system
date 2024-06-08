@@ -73,11 +73,9 @@ button:focus-visible {
   border: 2px solid #f3f3f3;
   border-top: 2px solid #3498db;
   border-radius: 50%;
-  width: 20px;
-  height: 20px;
+  width: 10px;
+  height: 10px;
   margin: 0 auto;
-  margin-top: 10px;
-  margin-bottom: 10px;
 }
 
 @keyframes spin {
