@@ -5,8 +5,8 @@ import "./App.css";
 import regions from "./regions";
 
 //For dev:
-const accessKeyIdSample = "AB";
-const secretAccess = "0z3ehf7+AB";
+const accessKeyIdSample = "AA";
+const secretAccess = "A";
 
 function App() {
   const [accessKeyId, setAccessKeyId] = useState(accessKeyIdSample);
@@ -96,7 +96,7 @@ function App() {
     setSelectedBucket("");
     setBucketObjects([]);
     setTree({});
-    setCurrentPath([]);
+    setCurrentPath("/");
     setAuthed(false);
     setAuthError(false);
     setSelectedObjects([]);
@@ -333,7 +333,7 @@ function App() {
             onClick={listBuckets}
             style={{ backgroundColor: isFormValid() ? "green" : "grey" }}
           >
-            List Buckets
+            List buckets
           </button>
         )}
 
