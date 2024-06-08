@@ -119,10 +119,12 @@ button {
   display: flex;
   flex-direction: column;
   .buckets-tools {
+    border-bottom: 1px solid #ccc;
     .tools {
       display: flex;
       gap: 10px;
       margin-bottom: 10px;
+
       .create-bucket {
         padding: 10px 15px;
         font-size: 14px;
@@ -168,8 +170,11 @@ button {
     display: flex;
     flex-direction: column;
     gap: 10px;
+
+    overflow-y: auto;
     .bucket {
       padding: 10px;
+      border-radius: 5px;
       border: 1px solid #ccc;
       cursor: pointer;
     }
@@ -182,67 +187,134 @@ button {
     }
   }
 }
-
 .object-tools {
   display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
   gap: 10px;
-  justify-content: space-between;
   margin-bottom: 10px;
-  .left {
-    display: flex;
-    gap: 10px;
-    .upload-object {
-      background-color: #007bff;
-      color: white;
-    }
-    .delete-object {
-      background-color: #dc3545;
-      color: white;
-    }
+  justify-content: space-between;
+}
 
-    .file-upload {
-      border-radius: 5px;
-      display: flex;
-      max-width: 300px;
-      max-height: 40px;
-      overflow: hidden;
-      gap: 10px;
-      padding: 10px;
-      font-size: 14px;
-      background-color: #2196f3;
-      color: white;
-      border: none;
-      cursor: pointer;
-      label {
-        cursor: pointer;
-      }
-      input {
-        display: none;
-      }
-    }
+.object-tools .left,
+.object-tools .right {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
 
-    .upload-button {
-      min-width: 100px;
-      max-height: 40px;
-      padding: 10px;
-      justify-content: center;
-    }
+.object-tools .file-upload {
+  border-radius: 5px;
+  display: flex;
+  max-width: 300px;
+  max-height: 40px;
+  overflow: hidden;
+  gap: 10px;
+  padding: 10px;
+  align-items: center;
+  line-height: 10px;
+  background-color: #2196f3;
+  color: white;
+  border: none;
+  cursor: pointer;
+  label {
+    cursor: pointer;
   }
-  .right {
-    display: flex;
-    gap: 10px;
-    .download-object {
-      background-color: #007bff;
-      color: white;
-    }
+  input {
+    display: none;
   }
+}
+.object-tools .download-button,
+.object-tools .upload-button,
+.object-tools .back-button,
+.object-tools .delete-folder-button,
+.object-tools .create-folder-button,
+.object-tools .clear-selection-button,
+.object-tools .delete-selected-button {
+  min-width: 100px;
+  max-height: 40px;
+  padding: 10px;
+  justify-content: center;
 }
 
 ul {
   list-style-type: none;
   padding: 0;
 }
+.object-item {
+  padding: 10px;
+  margin: 5px 0;
+  list-style: none;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #f9f9f9;
+  transition: background-color 0.3s;
+}
 
+.object-item:hover {
+  background-color: #e9e9e9;
+}
+
+.object-item.selected {
+  background-color: #d1e7fd;
+  border-color: #a3c4f3;
+}
+
+.object-name {
+  font-weight: bold;
+  margin-right: 10px;
+}
+
+.object-details {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.object-size,
+.object-modified {
+  font-size: 0.9em;
+  color: #555;
+}
+
+.folder-item {
+  padding: 10px;
+  margin: 5px 0;
+  list-style: none;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+  background-color: #f9f9f9;
+  transition: background-color 0.3s;
+}
+
+.folder-item:hover {
+  background-color: #e9e9e9;
+}
+
+.folder-item.selected {
+  background-color: #d1e7fd;
+  border-color: #a3c4f3;
+}
+
+.folder-content {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.folder-icon {
+  width: 20px;
+}
+
+.folder-name {
+  font-weight: bold;
+  color: #333;
+}
 li {
   padding: 10px;
   border: 1px solid #ddd;
@@ -257,4 +329,22 @@ li:hover {
 li.selected {
   background-color: #007bff;
   color: white;
+}
+@media (max-width: 768px) {
+  .object-tools {
+    flex-direction: column;
+  }
+
+  .hamburger {
+    display: flex;
+  }
+
+  .menu {
+    display: none;
+    flex-direction: column;
+  }
+
+  .menu.show {
+    display: flex;
+  }
 }
