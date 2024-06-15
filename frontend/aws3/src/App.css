@@ -16,10 +16,11 @@ body {
   background-color: #f8f9fa;
 }
 
-.left-side,
+.left-side {
+  width: 30%;
+}
 .right-side {
-  flex: 1;
-  width: 50%;
+  width: 70%;
 }
 .divider {
   width: 10px;

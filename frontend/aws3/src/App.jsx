@@ -1,41 +1,47 @@
 /* eslint-disable no-unused-vars */
 import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { setAuthCred, clearAuthCred } from "./store/authSlice";
 import axios from "axios";
 import "./App.css";
 import regions from "./regions";
+import FolderItem from "./components/FolderItem";
+import ObjectItem from "./components/ObjectItem";
+import {
+  setTree,
+  toggleSelectedFolder,
+  toggleSelectedObject,
+} from "./store/displaySlice";
+import ObjectToolsBar from "./components/ObjectTools";
+import { setSelectedBucket } from "./store/displaySlice";
+import { clearDisplayInfo } from "./store/displaySlice";
+import { setCurrentPath } from "./store/displaySlice";
+import { setSelectedFolder } from "./store/displaySlice";
+import { setSelectedObjects } from "./store/displaySlice";
 
 //For dev:
 const accessKeyIdSample = "A";
 const secretAccess = "0z3ehf7+A";
 
 function App() {
+  const dispatch = useDispatch();
+  const displayInfo = useSelector((state) => state.display.displayInfo);
+  //Auth info tracking
   const [accessKeyId, setAccessKeyId] = useState(accessKeyIdSample);
   const [secretAccessKey, setSecretAccessKey] = useState(secretAccess);
   const [region, setRegion] = useState("");
   const [buckets, setBuckets] = useState([]);
-
   const [loadingBucketObjects, setLoadingBucketObjects] = useState(false);
-  const [bucketObjects, setBucketObjects] = useState([]);
-  const [displayObjects, setDisplayObjects] = useState([]);
+
   //For upload/ file management
-  const [isUploading, setIsUploading] = useState(false);
-  const [file, setFile] = useState(null);
-  const [selectedObjects, setSelectedObjects] = useState([]);
-  const [tree, setTree] = useState({});
-  const [currentPath, setCurrentPath] = useState("/");
-  const [isDeletingFiles, setIsDeletingFiles] = useState(false);
-  const [isDownloadingFile, setIsDownloadingFile] = useState(false);
-  const [downloadProgress, setDownloadProgress] = useState(0);
+
   //Bucket interaction
-  const [selectedBucket, setSelectedBucket] = useState("");
   const [loadedObjectMessage, setLoadedObjectMessage] = useState("");
   const [bucketError, setBucketError] = useState(false);
   const [bucketErrorMessage, setBucketErrorMessage] = useState("");
   const [isDeletingBucket, setIsDeletingBucket] = useState(false);
   const [isCreatingBucket, setIsCreatingBucket] = useState(false);
-  const [selectedFolder, setSelectedFolder] = useState("");
-  const [isCreatingFolder, setIsCreatingFolder] = useState(false);
-  const [isDeletingFolder, setIsDeletingFolder] = useState(false);
+
   // Auth
   const [authError, setAuthError] = useState(false);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
@@ -43,12 +49,6 @@ function App() {
   const [authMessage, setAuthMessage] = useState("");
   const isFormValid = () => {
     return accessKeyId && secretAccessKey && region;
-  };
-
-  //UI
-  const [menuOpen, setMenuOpen] = useState(false);
-  const toggleMenu = () => {
-    setMenuOpen(!menuOpen);
   };
 
   const buildTree = (objects) => {
@@ -72,24 +72,21 @@ function App() {
 
     return root;
   };
+  //Used for clearing stuffs before pulling in new buckets
+  const clearBucketData = () => {
+    setAuthMessage("");
+    setAuthError(false);
+    setBucketError(false);
+    setBucketErrorMessage("");
+    setLoadedObjectMessage("");
+
+    setBuckets([]);
+    dispatch(clearDisplayInfo());
+  };
 
   const listBuckets = async () => {
     try {
-      setAuthMessage("");
-      setAuthError(false);
-      setBucketError(false);
-      setBucketErrorMessage("");
-      setSelectedBucket("");
-      setBucketObjects([]);
-      setFile(null);
-      setTree({});
-      setCurrentPath("/");
-      setSelectedObjects([]);
-      setDisplayObjects([]);
-      setBuckets([]);
-      setSelectedFolder("");
-      setLoadedObjectMessage("");
-      setSelectedBucket("");
+      clearBucketData();
 
       if (!isFormValid()) {
         setAuthError(true);
@@ -105,93 +102,33 @@ function App() {
         secretAccessKey,
         region,
       });
-
+      dispatch(
+        setAuthCred({
+          accessKey: accessKeyId,
+          secretKey: secretAccessKey,
+          region,
+        })
+      );
       setBuckets(response.data);
       setAuthed(true);
-      setIsAuthenticating(false);
     } catch (error) {
       console.error(error);
       setAuthError(true);
       setAuthed(false);
-      setIsAuthenticating(false);
       setAuthMessage("Invalid credentials. Please try again.");
+    } finally {
+      setIsAuthenticating(false);
     }
   };
 
   const disconnect = () => {
-    setRegion("");
-    setBuckets([]);
-    setSelectedBucket("");
-    setBucketObjects([]);
-    setTree({});
-    setCurrentPath("/");
+    dispatch(clearAuthCred());
+    clearBucketData();
     setAuthed(false);
-    setAuthError(false);
-    setSelectedObjects([]);
-    setDisplayObjects([]);
-  };
-
-  const downloadFile = async () => {
-    try {
-      setIsDownloadingFile(true);
-      setDownloadProgress(0); // Initialize download progress
-
-      // Take the first object of the selected objects.
-      // If multiple, return.
-      if (selectedObjects.length > 1) {
-        return;
-      }
-      const resDataSize = await axios.post(
-        "http://localhost:5000/downloadFileSize",
-        {
-          accessKeyId,
-          secretAccessKey,
-          region,
-          bucketName: selectedBucket,
-          fileName: selectedObjects[0].Key,
-        }
-      );
-      // In bytes
-      const totalSize = resDataSize.data;
-
-      const response = await axios.post(
-        "http://localhost:5000/downloadFile",
-        {
-          accessKeyId,
-          secretAccessKey,
-          region,
-          bucketName: selectedBucket,
-          fileName: selectedObjects[0].Key,
-        },
-        {
-          responseType: "blob",
-          onDownloadProgress: (progressEvent) => {
-            const progress = Math.round(
-              (progressEvent.loaded * 100) / totalSize
-            );
-            setDownloadProgress(progress);
-          },
-        }
-      );
-
-      const url = window.URL.createObjectURL(
-        new Blob([response.data], { type: response.headers["content-type"] })
-      );
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", selectedObjects[0].Key);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-    } catch (error) {
-      console.error(error);
-    }
-    setIsDownloadingFile(false);
   };
 
   const listObjectsFromBucket = async (bucketName) => {
     try {
-      setFile(null);
       setLoadedObjectMessage("");
       setLoadingBucketObjects(true);
       const response = await axios.post("http://localhost:5000/listObjects", {
@@ -202,27 +139,20 @@ function App() {
       });
       const objects = response.data;
       const tree = buildTree(objects);
-      setBucketObjects(objects);
-      setTree(tree);
+      dispatch(setTree(tree));
       setSelectedBucket(bucketName);
       setLoadedObjectMessage("Objects loaded for bucket: " + bucketName);
     } catch (error) {
       console.error(error);
     } finally {
-      setCurrentPath("/");
+      dispatch(setCurrentPath("/"));
     }
     setLoadingBucketObjects(false);
   };
 
-  const moveBackOneFolder = () => {
-    const newPath = currentPath.split("/").slice(0, -2).join("/") + "/";
-    setCurrentPath(newPath);
-  };
-
   const openFolder = (folderName) => {
-    setCurrentPath((prevPath) => {
-      return prevPath + folderName + "/";
-    });
+    const newPath = displayInfo.currentPath + folderName + "/";
+    dispatch(setCurrentPath(newPath));
   };
   const getObjectsWithPath = (node, path = "") => {
     let keys = Object.keys(node);
@@ -241,140 +171,16 @@ function App() {
       return;
     }
     //Clear selected objects when changing the current path
-    setSelectedObjects([]);
-    setSelectedFolder("");
-    //Refresh the list of objects when changing the current path
-    const objects = getObjectsWithPath(tree, currentPath);
 
-    setDisplayObjects(objects.flat());
-  }, [currentPath]);
-
-  const uploadFile = async () => {
-    try {
-      setIsUploading(true);
-      const formData = new FormData();
-      //Remove first /
-      let path = currentPath.slice(1);
-      //If last char is / , remove
-      if (path[path.length - 1] === "/") {
-        path = path.slice(0, -1);
-      }
-      formData.append("file", file);
-      formData.append("accessKeyId", accessKeyId);
-      formData.append("secretAccessKey", secretAccessKey);
-      formData.append("region", region);
-      formData.append("bucketName", selectedBucket);
-      formData.append("path", path);
-      await axios.post("http://localhost:5000/uploadFile", formData);
-      await listObjectsFromBucket(selectedBucket);
-      setFile(null);
-    } catch (error) {
-      console.error(error);
-    }
-    setIsUploading(false);
-  };
-  const deleteFiles = async () => {
-    setIsDeletingFiles(true);
-    try {
-      if (
-        window.confirm(
-          `Are you sure you want to delete ${selectedObjects.length} objects?`
-        )
-      ) {
-        selectedObjects.forEach(async (object) => {
-          await axios.post("http://localhost:5000/deleteFile", {
-            accessKeyId,
-            secretAccessKey,
-            region,
-            bucketName: selectedBucket,
-            fileName: object.Key,
-          });
-        });
-      }
-
-      setSelectedObjects([]);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      await listObjectsFromBucket(selectedBucket);
-      setIsDeletingFiles(false);
-    }
-  };
-  const createFolder = async () => {
-    setIsCreatingFolder(true);
-    const folderName = prompt("Enter folder name");
-    if (folderName) {
-      await axios
-        .post("http://localhost:5000/createFolder", {
-          accessKeyId,
-          secretAccessKey,
-          region,
-          bucketName: selectedBucket,
-          folderName: currentPath + folderName,
-        })
-        .then(() => listObjectsFromBucket(selectedBucket))
-        .catch((error) => {
-          console.error(error);
-        });
-    }
-    setIsCreatingFolder(false);
-  };
-  const deleteFolder = async () => {
-    //Popup confirm
-    setIsDeletingFolder(true);
-    if (
-      window.confirm(
-        `Are you sure you want to delete folder ${selectedFolder}?`
-      )
-    ) {
-      setIsDeletingFolder(true);
-      await axios
-        .post("http://localhost:5000/deleteFolder", {
-          accessKeyId,
-          secretAccessKey,
-          region,
-          bucketName: selectedBucket,
-          folderName: currentPath + selectedFolder,
-        })
-        .then(() => listObjectsFromBucket(selectedBucket))
-        .catch((error) => {
-          console.error(error);
-        });
-    }
-    await listObjectsFromBucket(selectedBucket);
-    setIsDeletingFolder(false);
-  };
-  const toggleSelection = (object) => {
-    setSelectedObjects((prevSelectedObjects) => {
-      const isSelected = prevSelectedObjects.some(
-        (selected) => selected.Key === object.Key
-      );
-
-      if (isSelected) {
-        return prevSelectedObjects.filter(
-          (selected) => selected.Key !== object.Key
-        );
-      } else {
-        return [...prevSelectedObjects, object];
-      }
-    });
-  };
-  const toggleSelectionFolder = (folderName) => {
-    //Only one folder can be selected at a time
-    setSelectedFolder((prevSelectedFolder) => {
-      if (prevSelectedFolder === folderName) {
-        return "";
-      } else {
-        return folderName;
-      }
-    });
-  };
+    dispatch(setSelectedObjects([]));
+    dispatch(setSelectedFolder(""));
+  }, [displayInfo.currentPath]);
 
   const renderTree = (node) => {
     //Render only in current path, filter out other paths. Still render smaller folder
 
     //1. Get sub tree to match the current path
-    const parts = currentPath.split("/");
+    const parts = displayInfo.currentPath.split("/");
     let current = node;
     parts.forEach((part) => {
       if (part) {
@@ -401,16 +207,16 @@ function App() {
           key={folderName}
           folderName={folderName}
           openFolder={openFolder}
-          toggleSelection={toggleSelectionFolder}
-          isSelected={selectedFolder === folderName}
+          toggleSelection={toggleSelectedFolder}
+          isSelected={displayInfo.selectedFolder === folderName}
         />
       )),
       ...files.map((file) => (
         <ObjectItem
           key={file.Key}
           object={file}
-          toggleSelection={toggleSelection}
-          isSelected={selectedObjects.some(
+          toggleSelection={toggleSelectedObject}
+          isSelected={displayInfo.selectedObjects.some(
             (selected) => selected.Key === file.Key
           )}
         />
@@ -535,18 +341,18 @@ function App() {
                   <button
                     //Add class selected if has selected bucket
                     className={
-                      selectedBucket
+                      displayInfo.selectedBucket !== ""
                         ? "delete-bucket selected"
                         : "delete-bucket disabled"
                     }
-                    disabled={selectedBucket === ""}
+                    disabled={displayInfo.selectedBucket === ""}
                     onClick={async () => {
                       setBucketError(false);
                       setIsDeletingBucket(true);
                       //Dialog yes no to confirm
                       if (
                         window.confirm(
-                          `Are you sure you want to delete bucket ${selectedBucket}?`
+                          `Are you sure you want to delete bucket ${displayInfo.selectedBucket}?`
                         )
                       ) {
                         await axios
@@ -554,7 +360,7 @@ function App() {
                             accessKeyId,
                             secretAccessKey,
                             region,
-                            bucketName: selectedBucket,
+                            bucketName: displayInfo.selectedBucket,
                           })
                           .then(() => listBuckets())
                           .catch((error) => {
@@ -574,12 +380,14 @@ function App() {
 
                   <button
                     className={
-                      selectedBucket === ""
+                      displayInfo.selectedBucket === ""
                         ? "list-objects disabled"
                         : "list-objects selected"
                     }
-                    onClick={() => listObjectsFromBucket(selectedBucket)}
-                    disabled={selectedBucket === ""}
+                    onClick={() =>
+                      listObjectsFromBucket(displayInfo.selectedBucket)
+                    }
+                    disabled={displayInfo.selectedBucket === ""}
                   >
                     {loadingBucketObjects ? (
                       <div className="loading"></div>
@@ -602,15 +410,15 @@ function App() {
                 <li
                   key={bucket.Name}
                   className={
-                    selectedBucket === bucket.Name
+                    displayInfo.selectedBucket === bucket.Name
                       ? "bucket selected"
                       : "bucket"
                   }
                   onClick={() => {
-                    if (selectedBucket === bucket.Name) {
-                      setSelectedBucket("");
+                    if (displayInfo.selectedBucket === bucket.Name) {
+                      dispatch(setSelectedBucket(""));
                     } else {
-                      setSelectedBucket(bucket.Name);
+                      dispatch(setSelectedBucket(bucket.Name));
                     }
                   }}
                 >
@@ -628,161 +436,16 @@ function App() {
       </div>
       <div className="divider"></div>
       <div className="right-side">
-        {selectedBucket && (
+        {displayInfo.selectedBucket && (
           <div className="objects">
             <h2>{loadedObjectMessage}</h2>
-            <h2>Current Path: {currentPath}</h2>
-            <div className="object-tools">
-              <div className="right">
-                <button
-                  onClick={deleteFolder}
-                  disabled={selectedFolder === ""}
-                  style={{ backgroundColor: selectedFolder ? "red" : "grey" }}
-                >
-                  {isDeletingFolder ? (
-                    <div className="loading"></div>
-                  ) : (
-                    "Delete folder"
-                  )}
-                </button>
-
-                <button
-                  onClick={createFolder}
-                  style={{ backgroundColor: "green" }}
-                >
-                  {isCreatingFolder ? (
-                    <div className="loading"></div>
-                  ) : (
-                    "Create folder"
-                  )}
-                </button>
-                <button
-                  onClick={() => {
-                    setSelectedObjects([]);
-                    setDisplayObjects([]);
-                  }}
-                  disabled={selectedObjects.length === 0}
-                  style={
-                    selectedObjects.length > 0
-                      ? { backgroundColor: "orange" }
-                      : { backgroundColor: "grey" }
-                  }
-                >
-                  Clear selection
-                </button>
-                <button
-                  disabled={selectedObjects.length === 0}
-                  onClick={deleteFiles}
-                  style={
-                    selectedObjects.length > 0
-                      ? { backgroundColor: "red" }
-                      : { backgroundColor: "grey" }
-                  }
-                >
-                  {isDeletingFiles ? (
-                    <div className="loading"></div>
-                  ) : (
-                    "Delete files"
-                  )}
-                </button>
-              </div>
-              <div className="left">
-                {currentPath.length > 0 && (
-                  <button
-                    onClick={moveBackOneFolder}
-                    className="back-button"
-                    style={
-                      currentPath === "/"
-                        ? { backgroundColor: "#ccc" }
-                        : { backgroundColor: "#2196f3" }
-                    }
-                    disabled={currentPath === "/"}
-                  >
-                    <img
-                      //Change color based on current path
-                      style={{
-                        width: "20px",
-                        color: currentPath === "/" ? "grey" : "white",
-                      }}
-                      src="src/assets/back.svg"
-                      alt="back"
-                    />
-                  </button>
-                )}
-                <div className="file-upload">
-                  <label style={{ textDecoration: "underline" }} htmlFor="file">
-                    Choose a file{" "}
-                  </label>
-                  <input
-                    type="file"
-                    id="file"
-                    onChange={(e) => setFile(e.target.files[0])}
-                  />
-
-                  {file && (
-                    <label>
-                      :
-                      {file.name.length > 20
-                        ? file.name.slice(0, 20) + "..."
-                        : file.name}
-                    </label>
-                  )}
-                </div>
-                <button
-                  onClick={uploadFile}
-                  className="upload-button"
-                  disabled={!file}
-                  style={
-                    file
-                      ? { backgroundColor: "green" }
-                      : { backgroundColor: "grey" }
-                  }
-                >
-                  {isUploading ? (
-                    <div className="loading"></div>
-                  ) : (
-                    "Upload file"
-                  )}
-                </button>
-                <button
-                  className="download-button"
-                  onClick={downloadFile}
-                  disabled={selectedObjects.length !== 1}
-                  style={
-                    selectedObjects.length === 1
-                      ? { backgroundColor: "green" }
-                      : { backgroundColor: "grey" }
-                  }
-                >
-                  {isDownloadingFile ? (
-                    <div className="loading"></div>
-                  ) : (
-                    <>
-                      <img
-                        style={{ width: "20px" }}
-                        src="src/assets/download.svg"
-                        alt="download"
-                      />
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-            {
-              <div>
-                {isDownloadingFile && (
-                  <div className="download-progress">
-                    <progress
-                      className="progress-bar"
-                      value={downloadProgress}
-                      max="100"
-                    />
-                    <span className="progress-text">{downloadProgress}%</span>
-                  </div>
-                )}
-              </div>
-            }
-            <ul>{renderTree(tree)}</ul>
+            <h2>Current Path: {displayInfo.currentPath}</h2>
+            <ObjectToolsBar
+              refreshObjects={async () =>
+                await listObjectsFromBucket(displayInfo.selectedBucket)
+              }
+            />
+            <ul>{renderTree(displayInfo.tree)}</ul>
           </div>
         )}
       </div>
@@ -790,64 +453,6 @@ function App() {
   );
 }
 
-//Single object item
-const ObjectItem = ({ object, toggleSelection, isSelected }) => {
-  // Key display: remove folder path
-
-  const renderName = () => {
-    const parts = object.Key.split("/");
-    return shortenName(parts[parts.length - 1]);
-  };
-  const shortenName = (name) => {
-    if (name.length > 40) {
-      //Still show file type
-      const extension = name.split(".").pop();
-      return name.slice(0, 40) + "... ." + extension;
-    }
-    return name;
-  };
-  const formatTime = (time) => {
-    return new Date(time).toLocaleString();
-  };
-  // If render name is empty, which means it is a folder passed as root
-  return (
-    <>
-      {renderName() !== "" && (
-        <li
-          onClick={() => toggleSelection(object)}
-          className={`object-item ${isSelected ? "selected" : ""}`}
-        >
-          <span className="object-name">{renderName()}</span>
-          <span className="object-details">
-            <span className="object-size">Size: {object.Size} bytes</span>
-            <span className="object-modified">
-              Last modified: {formatTime(object.LastModified)}
-            </span>
-          </span>
-        </li>
-      )}
-    </>
-  );
-};
 //Folder : On double click , change folder path
-const FolderItem = ({
-  folderName,
-  openFolder,
-  toggleSelection,
-  isSelected,
-}) => {
-  return (
-    <li
-      onDoubleClick={() => openFolder(folderName)}
-      onClick={() => toggleSelection(folderName)}
-      className={`folder-item ${isSelected ? "selected" : ""}`}
-    >
-      <div className="folder-content">
-        <img src="src/assets/folder.svg" alt="folder" className="folder-icon" />
-        <p className="folder-name">{folderName}</p>
-      </div>
-    </li>
-  );
-};
 
 export default App;
