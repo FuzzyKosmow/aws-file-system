@@ -1,5 +1,4 @@
-/* eslint-disable no-unused-vars */
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setAuthCred, clearAuthCred } from "./store/authSlice";
 import axios from "axios";
@@ -18,6 +17,8 @@ import { clearDisplayInfo } from "./store/displaySlice";
 import { setCurrentPath } from "./store/displaySlice";
 import { setSelectedFolder } from "./store/displaySlice";
 import { setSelectedObjects } from "./store/displaySlice";
+import PromptModal from "./components/PromptModal"; // Import PromptModal
+import ConfirmModal from "./components/ConfirmModal"; // Import ConfirmModal
 
 //For dev:
 const accessKeyIdSample = "A";
@@ -72,6 +73,7 @@ function App() {
 
     return root;
   };
+
   //Used for clearing stuffs before pulling in new buckets
   const clearBucketData = () => {
     setAuthMessage("");
@@ -154,6 +156,7 @@ function App() {
     const newPath = displayInfo.currentPath + folderName + "/";
     dispatch(setCurrentPath(newPath));
   };
+
   const getObjectsWithPath = (node, path = "") => {
     let keys = Object.keys(node);
 
@@ -224,6 +227,69 @@ function App() {
     ];
   };
 
+  // State for modals
+  const [isPromptOpen, setIsPromptOpen] = useState(false);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [promptMessage, setPromptMessage] = useState("");
+  const [confirmMessage, setConfirmMessage] = useState("");
+  const [bucketName, setBucketName] = useState("");
+
+  const handleCreateBucket = async () => {
+    setPromptMessage("Enter bucket name");
+    setIsPromptOpen(true);
+  };
+
+  const handleDeleteBucket = async () => {
+    setConfirmMessage(
+      `Are you sure you want to delete bucket ${displayInfo.selectedBucket}?`
+    );
+    setIsConfirmOpen(true);
+  };
+
+  const handlePromptSubmit = async (bucketName) => {
+    setIsCreatingBucket(true);
+    setBucketError(false);
+    setIsPromptOpen(false);
+    if (bucketName) {
+      await axios
+        .post("http://localhost:5000/createBucket", {
+          accessKeyId,
+          secretAccessKey,
+          region,
+          bucketName,
+        })
+        .then(() => listBuckets())
+        .catch((error) => {
+          if (error.response.status === 409) {
+            setBucketError(true);
+            setBucketErrorMessage(error.response.data.message);
+          } else {
+            console.error(error);
+          }
+        });
+    }
+    setIsCreatingBucket(false);
+  };
+
+  const handleConfirmSubmit = async () => {
+    setBucketError(false);
+    setIsDeletingBucket(true);
+    setIsConfirmOpen(false);
+    await axios
+      .post("http://localhost:5000/deleteBucket", {
+        accessKeyId,
+        secretAccessKey,
+        region,
+        bucketName: displayInfo.selectedBucket,
+      })
+      .then(() => listBuckets())
+      .catch((error) => {
+        setBucketError(true);
+        setBucketErrorMessage(error.response.data.message);
+      });
+    setIsDeletingBucket(false);
+  };
+
   return (
     <div className="app">
       <div className="left-side">
@@ -243,7 +309,6 @@ function App() {
                 onChange={(e) => setAccessKeyId(e.target.value)}
               />
               <label htmlFor="secret-access-key">Secret Access Key</label>
-
               <input
                 type="text"
                 placeholder="Secret Access Key"
@@ -305,32 +370,7 @@ function App() {
                 <div className="tools">
                   <button
                     className="create-bucket"
-                    onClick={async () => {
-                      setIsCreatingBucket(true);
-                      setBucketError(false);
-                      const bucketName = prompt("Enter bucket name");
-                      if (bucketName) {
-                        await axios
-                          .post("http://localhost:5000/createBucket", {
-                            accessKeyId,
-                            secretAccessKey,
-                            region,
-                            bucketName,
-                          })
-                          .then(() => listBuckets())
-                          .catch((error) => {
-                            if (error.response.status === 409) {
-                              setBucketError(true);
-                              setBucketErrorMessage(
-                                error.response.data.message
-                              );
-                            } else {
-                              console.error(error);
-                            }
-                          });
-                      }
-                      setIsCreatingBucket(false);
-                    }}
+                    onClick={handleCreateBucket}
                   >
                     {isCreatingBucket ? (
                       <div className="loading"></div>
@@ -346,30 +386,7 @@ function App() {
                         : "delete-bucket disabled"
                     }
                     disabled={displayInfo.selectedBucket === ""}
-                    onClick={async () => {
-                      setBucketError(false);
-                      setIsDeletingBucket(true);
-                      //Dialog yes no to confirm
-                      if (
-                        window.confirm(
-                          `Are you sure you want to delete bucket ${displayInfo.selectedBucket}?`
-                        )
-                      ) {
-                        await axios
-                          .post("http://localhost:5000/deleteBucket", {
-                            accessKeyId,
-                            secretAccessKey,
-                            region,
-                            bucketName: displayInfo.selectedBucket,
-                          })
-                          .then(() => listBuckets())
-                          .catch((error) => {
-                            setBucketError(true);
-                            setBucketErrorMessage(error.response.data.message);
-                          });
-                      }
-                      setIsDeletingBucket(false);
-                    }}
+                    onClick={handleDeleteBucket}
                   >
                     {isDeletingBucket ? (
                       <div className="loading"></div>
@@ -424,7 +441,7 @@ function App() {
                 >
                   <img
                     style={{ width: "20px", marginRight: "10px" }}
-                    src="src/assets/bucket.svg"
+                    src={"bucket.svg"}
                     alt="bucket"
                   />
                   {bucket.Name}
@@ -438,8 +455,12 @@ function App() {
       <div className="right-side">
         {displayInfo.selectedBucket && (
           <div className="objects">
-            <h2>{loadedObjectMessage}</h2>
-            <h2>Current Path: {displayInfo.currentPath}</h2>
+            <div className="path-bucket">
+              <span className="path-name">Path: {displayInfo.currentPath}</span>
+              <span className="bucket-name">
+                Bucket: {displayInfo.selectedBucket}
+              </span>
+            </div>
             <ObjectToolsBar
               refreshObjects={async () =>
                 await listObjectsFromBucket(displayInfo.selectedBucket)
@@ -449,10 +470,20 @@ function App() {
           </div>
         )}
       </div>
+      <PromptModal
+        message={promptMessage}
+        isOpen={isPromptOpen}
+        onSubmit={handlePromptSubmit}
+        onCancel={() => setIsPromptOpen(false)}
+      />
+      <ConfirmModal
+        message={confirmMessage}
+        isOpen={isConfirmOpen}
+        onConfirm={handleConfirmSubmit}
+        onCancel={() => setIsConfirmOpen(false)}
+      />
     </div>
   );
 }
-
-//Folder : On double click , change folder path
 
 export default App;
