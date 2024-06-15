@@ -1,10 +1,11 @@
+/* eslint-disable react/prop-types */
 import { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import axios from "axios";
-import { setSelectedObjects } from "../store/displaySlice";
-import { setCurrentPath } from "../store/displaySlice";
+import { setSelectedObjects, setCurrentPath } from "../store/displaySlice";
+import ConfirmModal from "./ConfirmModal";
+import PromptModal from "./PromptModal";
 
-// eslint-disable-next-line react/prop-types
 const ObjectToolsBar = ({ refreshObjects }) => {
   const auth = useSelector((state) => state.auth.validAuthCred);
   const displayInfo = useSelector((state) => state.display.displayInfo);
@@ -16,44 +17,45 @@ const ObjectToolsBar = ({ refreshObjects }) => {
   const [isDownloadingFile, setIsDownloadingFile] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [file, setFile] = useState(null);
-  // Delete selected folder
-  const deleteFolder = async () => {
-    // Popup confirm
-    setIsDeletingFolder(true);
-    if (
-      window.confirm(
-        `Are you sure you want to delete folder ${displayInfo.selectedFolder}?`
-      )
-    ) {
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [promptOpen, setPromptOpen] = useState(false);
+  const [confirmMessage, setConfirmMessage] = useState("");
+  const [promptMessage, setPromptMessage] = useState("");
+  const [confirmAction, setConfirmAction] = useState(() => () => {});
+  const [promptAction, setPromptAction] = useState(() => () => {});
+
+  const deleteFolder = () => {
+    setConfirmMessage(
+      `Are you sure you want to delete folder "${displayInfo.selectedFolder}"?`
+    );
+    setConfirmAction(() => async () => {
       setIsDeletingFolder(true);
-      await axios
-        .post("http://localhost:5000/deleteFolder", {
+      try {
+        await axios.post("http://localhost:5000/deleteFolder", {
           accessKeyId: auth.accessKey,
           secretAccessKey: auth.secretKey,
           region: auth.region,
           bucketName: displayInfo.selectedBucket,
           folderName: displayInfo.currentPath + displayInfo.selectedFolder,
-        })
-        .then(async () => {
-          await refreshObjects();
-        })
-        .catch((error) => {
-          console.error(error);
         });
-    }
-    setIsDeletingFolder(false);
+        await refreshObjects();
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setIsDeletingFolder(false);
+      }
+    });
+    setConfirmOpen(true);
   };
 
-  // Delete selected files
-  const deleteFiles = async () => {
-    setIsDeletingFiles(true);
-    try {
-      if (
-        window.confirm(
-          `Are you sure you want to delete ${displayInfo.selectedObjects.length} objects?`
-        )
-      ) {
-        displayInfo.selectedObjects.forEach(async (object) => {
+  const deleteFiles = () => {
+    setConfirmMessage(
+      `Are you sure you want to delete ${displayInfo.selectedObjects.length} objects?`
+    );
+    setConfirmAction(() => async () => {
+      setIsDeletingFiles(true);
+      try {
+        for (const object of displayInfo.selectedObjects) {
           await axios.post("http://localhost:5000/deleteFile", {
             accessKeyId: auth.accessKey,
             secretAccessKey: auth.secretKey,
@@ -61,59 +63,54 @@ const ObjectToolsBar = ({ refreshObjects }) => {
             bucketName: displayInfo.selectedBucket,
             fileName: object.Key,
           });
-        });
+        }
+        dispatch(setSelectedObjects([]));
+        await refreshObjects();
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setIsDeletingFiles(false);
       }
-
-      dispatch(setSelectedObjects([]));
-    } catch (error) {
-      console.error(error);
-    } finally {
-      await refreshObjects();
-      setIsDeletingFiles(false);
-    }
+    });
+    setConfirmOpen(true);
   };
 
-  // Create a folder at the current path
-  const createFolder = async () => {
-    setIsCreatingFolder(true);
-    const folderName = prompt("Enter folder name");
-    if (folderName) {
-      await axios
-        .post("http://localhost:5000/createFolder", {
-          accessKeyId: auth.accessKey,
-          secretAccessKey: auth.secretKey,
-          region: auth.region,
-          bucketName: displayInfo.selectedBucket,
-          folderName: displayInfo.currentPath + folderName,
-        })
-        .then(async () => {
+  const createFolder = () => {
+    setPromptMessage("Enter folder name");
+    setPromptAction(() => async (folderName) => {
+      if (folderName) {
+        setIsCreatingFolder(true);
+        try {
+          await axios.post("http://localhost:5000/createFolder", {
+            accessKeyId: auth.accessKey,
+            secretAccessKey: auth.secretKey,
+            region: auth.region,
+            bucketName: displayInfo.selectedBucket,
+            folderName: displayInfo.currentPath + folderName,
+          });
           await refreshObjects();
-        })
-        .catch((error) => {
+        } catch (error) {
           console.error(error);
-        });
-    }
-    setIsCreatingFolder(false);
+        } finally {
+          setIsCreatingFolder(false);
+        }
+      }
+    });
+    setPromptOpen(true);
   };
 
-  // Move back one folder in the hierarchy
   const moveBackOneFolder = () => {
     const newPath =
       displayInfo.currentPath.split("/").slice(0, -2).join("/") + "/";
     dispatch(setCurrentPath(newPath));
   };
 
-  // Upload file to selected bucket
   const uploadFile = async () => {
     try {
       setIsUploading(true);
       const formData = new FormData();
-      // Remove first /
       let path = displayInfo.currentPath.slice(1);
-      // If last char is / , remove
-      if (path[path.length - 1] === "/") {
-        path = path.slice(0, -1);
-      }
+      if (path[path.length - 1] === "/") path = path.slice(0, -1);
       formData.append("file", file);
       formData.append("accessKeyId", auth.accessKey);
       formData.append("secretAccessKey", auth.secretKey);
@@ -121,8 +118,7 @@ const ObjectToolsBar = ({ refreshObjects }) => {
       formData.append("bucketName", displayInfo.selectedBucket);
       formData.append("path", path);
       await axios.post("http://localhost:5000/uploadFile", formData);
-
-      dispatch(setFile(null));
+      setFile(null);
     } catch (error) {
       console.error(error);
     } finally {
@@ -134,13 +130,9 @@ const ObjectToolsBar = ({ refreshObjects }) => {
   const downloadFile = async () => {
     try {
       setIsDownloadingFile(true);
-      setDownloadProgress(0); // Initialize download progress
+      setDownloadProgress(0);
+      if (displayInfo.selectedObjects.length > 1) return;
 
-      // Take the first object of the selected objects.
-      // If multiple, return.
-      if (displayInfo.selectedObjects.length > 1) {
-        return;
-      }
       const resDataSize = await axios.post(
         "http://localhost:5000/downloadFileSize",
         {
@@ -151,7 +143,7 @@ const ObjectToolsBar = ({ refreshObjects }) => {
           fileName: displayInfo.selectedObjects[0].Key,
         }
       );
-      // In bytes
+
       const totalSize = resDataSize.data;
 
       const response = await axios.post(
@@ -185,8 +177,9 @@ const ObjectToolsBar = ({ refreshObjects }) => {
       link.remove();
     } catch (error) {
       console.error(error);
+    } finally {
+      setIsDownloadingFile(false);
     }
-    setIsDownloadingFile(false);
   };
 
   return (
@@ -197,17 +190,36 @@ const ObjectToolsBar = ({ refreshObjects }) => {
             onClick={deleteFolder}
             disabled={displayInfo.selectedFolder === ""}
             style={{
-              backgroundColor: displayInfo.selectedFolder ? "red" : "grey",
+              backgroundColor: displayInfo.selectedFolder
+                ? "#808080"
+                : "#d3d3d3",
+              cursor: displayInfo.selectedFolder ? "pointer" : "default",
+              border: "none",
+              padding: "10px 20px",
+              fontSize: "16px",
+              color: "#ffffff",
+              borderRadius: "5px",
+              boxShadow: "0px 2px 3px rgba(0, 0, 0, 0.1)",
+              transition: "background-color 0.3s ease",
             }}
           >
-            {isDeletingFolder ? (
-              <div className="loading"></div>
-            ) : (
-              "Delete folder"
-            )}
+            Delete folder
           </button>
-
-          <button onClick={createFolder} style={{ backgroundColor: "green" }}>
+          <button
+            onClick={createFolder}
+            //Similar to the above button, but with a different style
+            style={{
+              backgroundColor: !isCreatingFolder ? "#808080" : "#d3d3d3",
+              cursor: isCreatingFolder ? "default" : "pointer",
+              border: "none",
+              padding: "10px 20px",
+              fontSize: "16px",
+              color: "#ffffff",
+              borderRadius: "5px",
+              boxShadow: "0px 2px 3px rgba(0, 0, 0, 0.1)",
+              transition: "background-color 0.3s ease",
+            }}
+          >
             {isCreatingFolder ? (
               <div className="loading"></div>
             ) : (
@@ -215,25 +227,64 @@ const ObjectToolsBar = ({ refreshObjects }) => {
             )}
           </button>
           <button
-            onClick={() => {
-              dispatch(setSelectedObjects([]));
-            }}
+            onClick={() => dispatch(setSelectedObjects([]))}
             disabled={displayInfo.selectedObjects.length === 0}
+            //Similar to the above button, but with a different style
             style={
               displayInfo.selectedObjects.length > 0
-                ? { backgroundColor: "orange" }
-                : { backgroundColor: "grey" }
+                ? {
+                    backgroundColor: "#808080",
+                    cursor: "pointer",
+                    border: "none",
+                    padding: "10px 20px",
+                    fontSize: "16px",
+                    color: "#ffffff",
+                    borderRadius: "5px",
+                    boxShadow: "0px 2px 3px rgba(0, 0, 0, 0.1)",
+                    transition: "background-color 0.3s ease",
+                  }
+                : {
+                    backgroundColor: "#d3d3d3",
+                    cursor: "default",
+                    border: "none",
+                    padding: "10px 20px",
+                    fontSize: "16px",
+                    color: "#ffffff",
+                    borderRadius: "5px",
+                    boxShadow: "0px 2px 3px rgba(0, 0, 0, 0.1)",
+                    transition: "background-color 0.3s ease",
+                  }
             }
           >
             Clear selection
           </button>
           <button
-            disabled={displayInfo.selectedObjects.length === 0}
             onClick={deleteFiles}
+            disabled={displayInfo.selectedObjects.length === 0}
             style={
               displayInfo.selectedObjects.length > 0
-                ? { backgroundColor: "red" }
-                : { backgroundColor: "grey" }
+                ? {
+                    backgroundColor: "#808080",
+                    cursor: "pointer",
+                    border: "none",
+                    padding: "10px 20px",
+                    fontSize: "16px",
+                    color: "#ffffff",
+                    borderRadius: "5px",
+                    boxShadow: "0px 2px 3px rgba(0, 0, 0, 0.1)",
+                    transition: "background-color 0.3s ease",
+                  }
+                : {
+                    backgroundColor: "#d3d3d3",
+                    cursor: "default",
+                    border: "none",
+                    padding: "10px 20px",
+                    fontSize: "16px",
+                    color: "#ffffff",
+                    borderRadius: "5px",
+                    boxShadow: "0px 2px 3px rgba(0, 0, 0, 0.1)",
+                    transition: "background-color 0.3s ease",
+                  }
             }
           >
             {isDeletingFiles ? <div className="loading"></div> : "Delete files"}
@@ -252,12 +303,11 @@ const ObjectToolsBar = ({ refreshObjects }) => {
               disabled={displayInfo.currentPath === "/"}
             >
               <img
-                // Change color based on current path
                 style={{
                   width: "20px",
                   color: displayInfo.currentPath === "/" ? "grey" : "white",
                 }}
-                src="src/assets/back.svg"
+                src="back.svg"
                 alt="back"
               />
             </button>
@@ -271,7 +321,6 @@ const ObjectToolsBar = ({ refreshObjects }) => {
               id="file"
               onChange={(e) => setFile(e.target.files[0])}
             />
-
             {file && (
               <label>
                 :
@@ -286,7 +335,10 @@ const ObjectToolsBar = ({ refreshObjects }) => {
             className="upload-button"
             disabled={!file}
             style={
-              file ? { backgroundColor: "green" } : { backgroundColor: "grey" }
+              //Similar to the above button, but with a different style
+              file
+                ? { backgroundColor: "#2196f3" }
+                : { backgroundColor: "#ccc" }
             }
           >
             {isUploading ? <div className="loading"></div> : "Upload file"}
@@ -297,20 +349,18 @@ const ObjectToolsBar = ({ refreshObjects }) => {
             disabled={displayInfo.selectedObjects.length !== 1}
             style={
               displayInfo.selectedObjects.length === 1
-                ? { backgroundColor: "green" }
-                : { backgroundColor: "grey" }
+                ? { backgroundColor: "#2196f3" }
+                : { backgroundColor: "#ccc" }
             }
           >
             {isDownloadingFile ? (
               <div className="loading"></div>
             ) : (
-              <>
-                <img
-                  style={{ width: "20px" }}
-                  src="src/assets/download.svg"
-                  alt="download"
-                />
-              </>
+              <img
+                style={{ width: "20px" }}
+                src="download.svg"
+                alt="download"
+              />
             )}
           </button>
         </div>
@@ -325,6 +375,24 @@ const ObjectToolsBar = ({ refreshObjects }) => {
           <span className="progress-text">{downloadProgress}%</span>
         </div>
       )}
+      <ConfirmModal
+        message={confirmMessage}
+        onConfirm={() => {
+          confirmAction();
+          setConfirmOpen(false);
+        }}
+        onCancel={() => setConfirmOpen(false)}
+        isOpen={confirmOpen}
+      />
+      <PromptModal
+        message={promptMessage}
+        onSubmit={(value) => {
+          promptAction(value);
+          setPromptOpen(false);
+        }}
+        onCancel={() => setPromptOpen(false)}
+        isOpen={promptOpen}
+      />
     </>
   );
 };

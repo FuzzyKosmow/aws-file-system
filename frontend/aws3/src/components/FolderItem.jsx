@@ -17,7 +17,7 @@ const FolderItem = ({
       className={`folder-item ${isSelected ? "selected" : ""}`}
     >
       <div className="folder-content">
-        <img src="src/assets/folder.svg" alt="folder" className="folder-icon" />
+        <img src="folder.svg" alt="folder" className="folder-icon" />
         <p className="folder-name">{folderName}</p>
       </div>
     </li>
