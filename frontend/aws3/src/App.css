@@ -46,14 +46,22 @@ button {
 body {
   font-size: 16px;
 }
-
+.no-bucket {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+}
 .app {
   font-family: Arial, sans-serif;
   display: flex;
   flex-direction: row;
   padding: 20px;
   width: 100%;
-  background-color: #f8f9fa;
+  background-color: #a0a4a738;
 }
 
 .left-side {
@@ -66,8 +74,8 @@ body {
 
 .divider {
   width: 10px;
-  background-color: #f8f9fa;
-  border-left: 1px solid #ccc;
+  background-color: #f1f1f1;
+
   margin-left: 10px;
 }
 
@@ -204,7 +212,7 @@ button {
 }
 
 .buckets-tools {
-  border-bottom: 1px solid #ccc;
+  border-bottom: 2px solid #ccc;
 }
 
 .tools {

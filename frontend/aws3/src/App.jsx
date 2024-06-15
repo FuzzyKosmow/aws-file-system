@@ -370,6 +370,10 @@ function App() {
                 <div className="tools">
                   <button
                     className="create-bucket"
+                    style={{
+                      backgroundColor: "#808080",
+                      boxShadow: "0px 2px 3px rgba(0, 0, 0, 0.1)",
+                    }}
                     onClick={handleCreateBucket}
                   >
                     {isCreatingBucket ? (
@@ -385,6 +389,16 @@ function App() {
                         ? "delete-bucket selected"
                         : "delete-bucket disabled"
                     }
+                    style={{
+                      backgroundColor:
+                        displayInfo.selectedBucket !== ""
+                          ? "#808080"
+                          : "#d3d3d3",
+                      boxShadow:
+                        displayInfo.selectedBucket !== ""
+                          ? "0px 2px 3px rgba(0, 0, 0, 0.1)"
+                          : "none",
+                    }}
                     disabled={displayInfo.selectedBucket === ""}
                     onClick={handleDeleteBucket}
                   >
@@ -401,6 +415,16 @@ function App() {
                         ? "list-objects disabled"
                         : "list-objects selected"
                     }
+                    style={{
+                      backgroundColor:
+                        displayInfo.selectedBucket === ""
+                          ? "#d3d3d3"
+                          : "#808080",
+                      boxShadow:
+                        displayInfo.selectedBucket === ""
+                          ? "none"
+                          : "0px 2px 3px rgba(0, 0, 0, 0.1)",
+                    }}
                     onClick={() =>
                       listObjectsFromBucket(displayInfo.selectedBucket)
                     }
@@ -453,7 +477,7 @@ function App() {
       </div>
       <div className="divider"></div>
       <div className="right-side">
-        {displayInfo.selectedBucket && (
+        {displayInfo.selectedBucket !== "" ? (
           <div className="objects">
             <div className="path-bucket">
               <span className="path-name">Path: {displayInfo.currentPath}</span>
@@ -467,6 +491,10 @@ function App() {
               }
             />
             <ul>{renderTree(displayInfo.tree)}</ul>
+          </div>
+        ) : (
+          <div className="no-bucket">
+            <p>No bucket selected</p>
           </div>
         )}
       </div>

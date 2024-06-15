@@ -187,6 +187,31 @@ const ObjectToolsBar = ({ refreshObjects }) => {
       <div className="object-tools">
         <div className="right">
           <button
+            onClick={moveBackOneFolder}
+            className="back-button"
+            style={
+              displayInfo.currentPath === "/" ||
+              displayInfo.selectedObjects.length <= 0 ||
+              isDeletingFolder ||
+              isCreatingFolder ||
+              isUploading ||
+              isDownloadingFile ||
+              isDeletingFiles
+                ? { backgroundColor: "#d3d3d3" }
+                : { backgroundColor: "#808080" }
+            }
+            disabled={displayInfo.currentPath === "/"}
+          >
+            <img
+              style={{
+                width: "20px",
+                color: displayInfo.currentPath === "/" ? "grey" : "white",
+              }}
+              src="back.svg"
+              alt="back"
+            />
+          </button>
+          <button
             onClick={deleteFolder}
             disabled={displayInfo.selectedFolder === ""}
             style={{
@@ -203,7 +228,11 @@ const ObjectToolsBar = ({ refreshObjects }) => {
               transition: "background-color 0.3s ease",
             }}
           >
-            Delete folder
+            {isDeletingFolder ? (
+              <div className="loading"></div>
+            ) : (
+              "Delete folder"
+            )}
           </button>
           <button
             onClick={createFolder}
@@ -291,44 +320,15 @@ const ObjectToolsBar = ({ refreshObjects }) => {
           </button>
         </div>
         <div className="left">
-          {displayInfo.currentPath !== "/" && (
-            <button
-              onClick={moveBackOneFolder}
-              className="back-button"
-              style={
-                displayInfo.currentPath === "/"
-                  ? { backgroundColor: "#ccc" }
-                  : { backgroundColor: "#2196f3" }
-              }
-              disabled={displayInfo.currentPath === "/"}
-            >
-              <img
-                style={{
-                  width: "20px",
-                  color: displayInfo.currentPath === "/" ? "grey" : "white",
-                }}
-                src="back.svg"
-                alt="back"
-              />
-            </button>
-          )}
           <div className="file-upload">
             <label style={{ textDecoration: "underline" }} htmlFor="file">
-              Choose a file{" "}
+              {file ? file.name : "Choose a file"}
             </label>
             <input
               type="file"
               id="file"
               onChange={(e) => setFile(e.target.files[0])}
             />
-            {file && (
-              <label>
-                :
-                {file.name.length > 20
-                  ? file.name.slice(0, 20) + "..."
-                  : file.name}
-              </label>
-            )}
           </div>
           <button
             onClick={uploadFile}
