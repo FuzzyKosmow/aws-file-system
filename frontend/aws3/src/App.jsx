@@ -35,6 +35,8 @@ function App() {
   const [loadingBucketObjects, setLoadingBucketObjects] = useState(false);
 
   //For upload/ file management
+  const [dragFile, setDragFile] = useState(null);
+  const [dragging, setDragging] = useState(false);
 
   //Bucket interaction
   const [loadedObjectMessage, setLoadedObjectMessage] = useState("");
@@ -50,6 +52,18 @@ function App() {
   const [authMessage, setAuthMessage] = useState("");
   const isFormValid = () => {
     return accessKeyId && secretAccessKey && region;
+  };
+  const onNewFile = (file) => {
+    setDragFile(file);
+  };
+  //Used when a user drag a file to the object list. Set the dragFile state
+  const dropFile = async (e) => {
+    e.preventDefault();
+    setDragging(false);
+    //If its a file , then set the dragFile state
+    if (e.dataTransfer.files.length > 0) {
+      setDragFile(e.dataTransfer.files[0]);
+    }
   };
 
   const buildTree = (objects) => {
@@ -81,7 +95,8 @@ function App() {
     setBucketError(false);
     setBucketErrorMessage("");
     setLoadedObjectMessage("");
-
+    setDragFile(null);
+    setDragging(false);
     setBuckets([]);
     dispatch(clearDisplayInfo());
   };
@@ -148,6 +163,8 @@ function App() {
       console.error(error);
     } finally {
       dispatch(setCurrentPath("/"));
+      setDragFile(null);
+      setDragging(false);
     }
     setLoadingBucketObjects(false);
   };
@@ -489,8 +506,36 @@ function App() {
               refreshObjects={async () =>
                 await listObjectsFromBucket(displayInfo.selectedBucket)
               }
+              file={dragFile}
+              setFile={onNewFile}
             />
-            <ul>{renderTree(displayInfo.tree)}</ul>
+            <div
+              //On file drag
+              onDragOver={(e) => {
+                e.preventDefault();
+                setDragging(true);
+              }}
+              onDragEnter={(e) => {
+                e.preventDefault();
+                setDragging(true);
+              }}
+              onDragLeave={(e) => {
+                e.preventDefault();
+                setDragging(false);
+              }}
+              onDrop={dropFile}
+              style={{
+                //Transparent border when dragging
+                border: dragging ? "2px solid #808080" : "2px dashed #00000000",
+                height: "100%",
+                display: "flex",
+                flexDirection: "column",
+                overflowY: "auto",
+              }}
+              className="objects-list"
+            >
+              <ul>{renderTree(displayInfo.tree)}</ul>
+            </div>
           </div>
         ) : (
           <div className="no-bucket">

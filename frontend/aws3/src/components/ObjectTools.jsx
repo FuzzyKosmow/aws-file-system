@@ -1,4 +1,3 @@
-/* eslint-disable react/prop-types */
 import { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import axios from "axios";
@@ -6,7 +5,7 @@ import { setSelectedObjects, setCurrentPath } from "../store/displaySlice";
 import ConfirmModal from "./ConfirmModal";
 import PromptModal from "./PromptModal";
 
-const ObjectToolsBar = ({ refreshObjects }) => {
+const ObjectToolsBar = ({ file, setFile, refreshObjects }) => {
   const auth = useSelector((state) => state.auth.validAuthCred);
   const displayInfo = useSelector((state) => state.display.displayInfo);
   const dispatch = useDispatch();
@@ -16,7 +15,6 @@ const ObjectToolsBar = ({ refreshObjects }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [isDownloadingFile, setIsDownloadingFile] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
-  const [file, setFile] = useState(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [promptOpen, setPromptOpen] = useState(false);
   const [confirmMessage, setConfirmMessage] = useState("");

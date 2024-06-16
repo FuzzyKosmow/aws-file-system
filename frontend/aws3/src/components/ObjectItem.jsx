@@ -31,6 +31,8 @@ const ObjectItem = ({ object, toggleSelection, isSelected }) => {
         >
           <span className="object-name">{renderName()}</span>
           <span className="object-details">
+            <span className="object-type"> {object.Type}</span>
+
             <span className="object-size">Size: {object.Size} bytes</span>
             <span className="object-modified">
               Last modified: {formatTime(object.LastModified)}

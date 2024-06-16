@@ -206,6 +206,12 @@ button {
   margin-top: 20px;
 }
 
+.objects {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
 .buckets-container {
   display: flex;
   flex-direction: column;
