@@ -34,12 +34,14 @@ function App() {
   const [buckets, setBuckets] = useState([]);
   const [loadingBucketObjects, setLoadingBucketObjects] = useState(false);
 
+  //For searching
+  const [searchTerm, setSearchTerm] = useState("");
+
   //For upload/ file management
   const [dragFile, setDragFile] = useState(null);
   const [dragging, setDragging] = useState(false);
 
   //Bucket interaction
-  const [loadedObjectMessage, setLoadedObjectMessage] = useState("");
   const [bucketError, setBucketError] = useState(false);
   const [bucketErrorMessage, setBucketErrorMessage] = useState("");
   const [isDeletingBucket, setIsDeletingBucket] = useState(false);
@@ -72,13 +74,14 @@ function App() {
     objects.forEach((object) => {
       const parts = object.Key.split("/");
       let current = root;
-      //This will result in empty folder will have the last part being empty
-      //For example, if the object key is "folder1/folder2/file.txt", the parts will be ["folder1", "folder2", "file.txt"]
-      //If the object key is "folder1/folder2/", the parts will be ["folder1", "folder2", ""]
+      let path = ""; // To keep track of the full path
+
       parts.forEach((part, index) => {
         if (index === parts.length - 1) {
+          object.fullPath = object.Key; // Adding the fullPath property
           current[part] = object;
         } else {
+          path += (path ? "/" : "") + part; // Update the path
           current[part] = current[part] || {};
           current = current[part];
         }
@@ -94,7 +97,6 @@ function App() {
     setAuthError(false);
     setBucketError(false);
     setBucketErrorMessage("");
-    setLoadedObjectMessage("");
     setDragFile(null);
     setDragging(false);
     setBuckets([]);
@@ -146,7 +148,6 @@ function App() {
 
   const listObjectsFromBucket = async (bucketName) => {
     try {
-      setLoadedObjectMessage("");
       setLoadingBucketObjects(true);
       const response = await axios.post("http://localhost:5000/listObjects", {
         accessKeyId,
@@ -158,7 +159,6 @@ function App() {
       const tree = buildTree(objects);
       dispatch(setTree(tree));
       setSelectedBucket(bucketName);
-      setLoadedObjectMessage("Objects loaded for bucket: " + bucketName);
     } catch (error) {
       console.error(error);
     } finally {
@@ -169,23 +169,10 @@ function App() {
     setLoadingBucketObjects(false);
   };
 
-  const openFolder = (folderName) => {
-    const newPath = displayInfo.currentPath + folderName + "/";
+  const openFullpath = (fullpath) => {
+    const newPath = fullpath;
     dispatch(setCurrentPath(newPath));
   };
-
-  const getObjectsWithPath = (node, path = "") => {
-    let keys = Object.keys(node);
-
-    return keys.map((key) => {
-      if (node[key].Key) {
-        return { ...node[key], Key: path + key };
-      } else {
-        return getObjectsWithPath(node[key], path + key + "/");
-      }
-    });
-  };
-
   useEffect(() => {
     if (!authed) {
       return;
@@ -197,9 +184,12 @@ function App() {
   }, [displayInfo.currentPath]);
 
   const renderTree = (node) => {
+    if (searchTerm !== "") {
+      return renderTreeWithSearch(node);
+    }
     //Render only in current path, filter out other paths. Still render smaller folder
 
-    //1. Get sub tree to match the current path
+    //1. Get sub tree to match the current path if there is no search term
     const parts = displayInfo.currentPath.split("/");
     let current = node;
     parts.forEach((part) => {
@@ -216,19 +206,75 @@ function App() {
       if (current[key].Key) {
         files.push(current[key]);
       } else {
-        folders.push(key);
+        folders.push({ folderName: key, fullPath: current[key][""].fullPath });
       }
     });
-
     //3. Render folders at the top, files at the bottom
     return [
-      ...folders.map((folderName) => (
+      ...folders.map((folder) => (
         <FolderItem
-          key={folderName}
-          folderName={folderName}
-          openFolder={openFolder}
+          key={folder.folderName}
+          folderName={folder.folderName}
+          openFolder={openFullpath}
           toggleSelection={toggleSelectedFolder}
-          isSelected={displayInfo.selectedFolder === folderName}
+          isSelected={displayInfo.selectedFolder === folder.folderName}
+          fullpath={folder.fullPath}
+        />
+      )),
+      ...files.map((file) => (
+        <ObjectItem
+          key={file.Key}
+          object={file}
+          toggleSelection={toggleSelectedObject}
+          isSelected={displayInfo.selectedObjects.some(
+            (selected) => selected.Key === file.Key
+          )}
+        />
+      )),
+    ];
+  };
+  //Same thing, except it search for all nodes not just current path
+  const renderTreeWithSearch = (node) => {
+    const searchResult = [];
+    //Go through all nodes and search for the searchTerm. If found, add to searchResult
+    const search = (node) => {
+      let keys = Object.keys(node);
+      keys.forEach((key) => {
+        //File
+        if (node[key].Key) {
+          //To lower case
+          if (node[key].Key.toLowerCase().includes(searchTerm.toLowerCase())) {
+            searchResult.push(node[key]);
+          }
+        } else {
+          search(node[key]);
+        }
+      });
+    };
+    search(node);
+    //Separate folders and files
+    const folders = [];
+    const files = [];
+    searchResult.forEach((item) => {
+      if (item.Key) {
+        files.push(item);
+      } else {
+        folders.push({
+          folderName: Object.keys(item)[0],
+          fullPath: item[""].fullPath,
+        });
+      }
+    });
+    //Render folders at the top, files at the bottom
+    return [
+      ...folders.map((folder) => (
+        <FolderItem
+          key={folder.folderName}
+          folderName={folder.folderName}
+          openFolder={openFullpath}
+          toggleSelection={toggleSelectedFolder}
+          isSelected={displayInfo.selectedFolder === folder.folderName}
+          fullpath={folder.fullPath}
         />
       )),
       ...files.map((file) => (
@@ -498,6 +544,12 @@ function App() {
           <div className="objects">
             <div className="path-bucket">
               <span className="path-name">Path: {displayInfo.currentPath}</span>
+              <input
+                type="text"
+                placeholder="Search"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
               <span className="bucket-name">
                 Bucket: {displayInfo.selectedBucket}
               </span>
