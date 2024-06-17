@@ -21,9 +21,9 @@ import PromptModal from "./components/PromptModal"; // Import PromptModal
 import ConfirmModal from "./components/ConfirmModal"; // Import ConfirmModal
 
 //For dev:
-const accessKeyIdSample = "A";
-const secretAccess = "0z3ehf7+A";
 
+const accessKeyIdSample = "";
+const secretAccess = "";
 function App() {
   const dispatch = useDispatch();
   const displayInfo = useSelector((state) => state.display.displayInfo);
@@ -171,6 +171,7 @@ function App() {
 
   const openFullpath = (fullpath) => {
     const newPath = fullpath;
+    console.log("Set current path to: ", newPath);
     dispatch(setCurrentPath(newPath));
   };
   useEffect(() => {
@@ -184,7 +185,7 @@ function App() {
   }, [displayInfo.currentPath]);
 
   const renderTree = (node) => {
-    if (searchTerm !== "") {
+    if (searchTerm !== "" && searchTerm.length > 0) {
       return renderTreeWithSearch(node);
     }
     //Render only in current path, filter out other paths. Still render smaller folder
@@ -206,7 +207,7 @@ function App() {
       if (current[key].Key) {
         files.push(current[key]);
       } else {
-        folders.push({ folderName: key, fullPath: current[key][""].fullPath });
+        folders.push({ folderName: key, fullPath: current[key][""]?.fullPath });
       }
     });
     //3. Render folders at the top, files at the bottom
@@ -218,7 +219,7 @@ function App() {
           openFolder={openFullpath}
           toggleSelection={toggleSelectedFolder}
           isSelected={displayInfo.selectedFolder === folder.folderName}
-          fullpath={folder.fullPath}
+          fullpath={folder.fullPath || ""}
         />
       )),
       ...files.map((file) => (
@@ -235,6 +236,7 @@ function App() {
   };
   //Same thing, except it search for all nodes not just current path
   const renderTreeWithSearch = (node) => {
+    console.log("IN SEARCH");
     const searchResult = [];
     //Go through all nodes and search for the searchTerm. If found, add to searchResult
     const search = (node) => {

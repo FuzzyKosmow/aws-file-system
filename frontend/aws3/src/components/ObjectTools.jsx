@@ -107,7 +107,7 @@ const ObjectToolsBar = ({ file, setFile, refreshObjects }) => {
     try {
       setIsUploading(true);
       const formData = new FormData();
-      let path = displayInfo.currentPath.slice(1);
+      let path = displayInfo.currentPath;
       if (path[path.length - 1] === "/") path = path.slice(0, -1);
       formData.append("file", file);
       formData.append("accessKeyId", auth.accessKey);
@@ -320,7 +320,11 @@ const ObjectToolsBar = ({ file, setFile, refreshObjects }) => {
         <div className="left">
           <div className="file-upload">
             <label style={{ textDecoration: "underline" }} htmlFor="file">
-              {file ? file.name : "Choose a file"}
+              {file
+                ? file.name.length > 10
+                  ? file.name.slice(0, 10) + "..."
+                  : file.name
+                : "Choose file"}
             </label>
             <input
               type="file"
