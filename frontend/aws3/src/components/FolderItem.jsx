@@ -6,11 +6,14 @@ const FolderItem = ({
   openFolder,
   toggleSelection,
   isSelected,
+  fullpath,
 }) => {
   const dispatch = useDispatch();
   return (
     <li
-      onDoubleClick={() => openFolder(folderName)}
+      onDoubleClick={() => {
+        openFolder(fullpath);
+      }}
       onClick={() => {
         dispatch(toggleSelection(folderName));
       }}
